@@ -1,0 +1,22 @@
+{
+  "name": "mavapp-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --inspect index.js",
+    "serve": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "mavapp-backend"
+  },
+  "author": "Daniel Sharp",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.4",
+    "request": "^2.88.0",
+    "uuid": "^3.3.2"
+  }
+}
