@@ -1,4 +1,4 @@
-const { parseTimeTuple, fixJson } = require("./parser-commons");
+const { parseTimeTuple, fixJson } = require("./parserCommons");
 const {
   TrainHeader,
   TrainPolyline,
@@ -9,11 +9,12 @@ const {
   TrainElviraId
 } = require("./statements");
 
-const processStatement = require("./process-statement");
+const processStatement = require("./processStatement");
 const cheerio = require("cheerio");
 
 module.exports = class TrainParser {
-  constructor(apiRes) {
+  constructor(req, apiRes) {
+    this.req = req;
     this.ch = cheerio.load(apiRes.d.result.html, { decodeEntities: true });
     this.polyline = apiRes.d.result.line[0].points;
   }
@@ -32,6 +33,11 @@ module.exports = class TrainParser {
     const textNode = contents.eq(0).text();
     const words = textNode.split(" ").map(w => w.trim());
     this.trainNumber = parseInt(words[0]);
+
+    if (typeof this.req.jo.v !== "undefined") {
+      processStatement(new TrainElviraId(this.trainNumber, this.req.jo.v));
+    }
+
     let name;
     let type = words[words.length - 1];
     if (contents.get(1).tagName === "br" || contents.get(1).tagName === "span") {

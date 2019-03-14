@@ -1,4 +1,4 @@
-const { parseTimeTuple, fixJson } = require("./parser-commons");
+const { parseTimeTuple, fixJson } = require("./parserCommons");
 const {
   TrainHeader,
   TrainRelation,
@@ -6,10 +6,10 @@ const {
   TrainElviraId
 } = require("./statements");
 
-const processStatement = require("./process-statement");
+const processStatement = require("./processStatement");
 const cheerio = require("cheerio");
 
-module.exports = class TrainParser {
+module.exports = class StationParser {
   constructor(apiRes) {
     this.ch = cheerio.load(apiRes.d.result, { decodeEntities: true });
   }
