@@ -1,3 +1,3 @@
 module.exports = function processStatement(statement) {
-  console.log(statement);
+  console.log({ type: statement.constructor.name, data: statement });
 };

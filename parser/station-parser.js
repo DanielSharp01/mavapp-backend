@@ -1,9 +1,9 @@
 const { parseTimeTuple, fixJson } = require("./parser-commons");
 const {
-  trainHeader,
-  trainRelation,
-  trainStationInfo,
-  trainElviraId
+  TrainHeader,
+  TrainRelation,
+  TrainStationInfo,
+  TrainElviraId
 } = require("./statements");
 
 const processStatement = require("./process-statement");
@@ -45,27 +45,29 @@ module.exports = class TrainParser {
     let trainTdC = trainTd.contents();
     let trainA = trainTdC.eq(0).first();
     let trainNumber = trainA.text();
-    processStatement(trainStationInfo(trainNumber, this.name, { arrival, departure, platform }));
+    processStatement(new TrainStationInfo(trainNumber, this.name, { arrival, departure, platform }));
 
     let onclick = trainA.attr("onclick");
     let elviraId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-    processStatement(trainElviraId(trainNumber, elviraId));
+    processStatement(new TrainElviraId(trainNumber, elviraId));
 
     let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
     let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
     let type = nameTypeSpl[nameTypeSpl.length - 1].trim();
-    processStatement(trainHeader(trainNumber, type, this.date, { name }));
+    processStatement(new TrainHeader(trainNumber, type, this.date, { name }));
 
     let relSpl = trainTdC.eq(3).text().split(" -- ").map(s => s.trim().replaceEmpty());
     let fromRel = relSpl[0] && relSpl[0].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
     let toRel = relSpl[1] && relSpl[1].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
 
     if (fromRel)
-      processStatement(trainStationInfo(trainNumber, fromRel[1],
+      processStatement(new TrainStationInfo(trainNumber, fromRel[1],
         { departure: { scheduled: fromRel[0], actual: null }, arrival: null }));
 
     if (toRel)
-      processStatement(trainStationInfo(trainNumber, toRel[0],
+      processStatement(new TrainStationInfo(trainNumber, toRel[0],
         { arrival: { scheduled: toRel[1], actual: null }, departure: null }));
+
+    processStatement(new TrainRelation(trainNumber, fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name));
   }
 };

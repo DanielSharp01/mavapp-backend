@@ -1,12 +1,12 @@
 const { parseTimeTuple, fixJson } = require("./parser-commons");
 const {
-  trainHeader,
-  trainPolyline,
-  trainExpiry,
-  trainRelation,
-  trainStationInfo,
-  trainStationLink,
-  trainElviraId
+  TrainHeader,
+  TrainPolyline,
+  TrainExpiry,
+  TrainRelation,
+  TrainStationInfo,
+  TrainStationLink,
+  TrainElviraId
 } = require("./statements");
 
 const processStatement = require("./process-statement");
@@ -22,7 +22,7 @@ module.exports = class TrainParser {
     this.parseTrainHeader();
     this.parseTrainStations();
     this.parseTrainExpiry();
-    processStatement(trainPolyline(this.trainNumber, this.polyline));
+    processStatement(new TrainPolyline(this.trainNumber, this.polyline));
   }
 
   parseTrainHeader() {
@@ -37,7 +37,7 @@ module.exports = class TrainParser {
     if (contents.get(1).tagName === "br" || contents.get(1).tagName === "span") {
       name = words.slice(1, -1).join(" ").trim();
     } else {
-      name = words.slice(1).join(" ").trim().replaceEmpty();
+      name = words.slice(1).join(" ").trim().replaceEmpty(null);
     }
 
     if (contents.get(1).tagName == "img") {
@@ -56,13 +56,14 @@ module.exports = class TrainParser {
       });
     }
 
-    let visz = header.find(".viszszam2").text().trim().replaceEmpty();
+    let viszSpan = header.find(".viszszam2");
+    let visz = viszSpan ? viszSpan.text().trim().replaceEmpty(null) : null;
 
     let spl = header.find("font").text().slice(1, -1).split(",").map(s => s.trim());
     let relationSpl = spl[0].split(" - ").map(s => s.trim());
 
-    processStatement(trainHeader(this.trainNumber, type, spl[1], { name, visz }));
-    processStatement(trainRelation(this.trainNumber, relationSpl[0], relationSpl[1]));
+    processStatement(new TrainHeader(this.trainNumber, type, spl[1], { name, visz }));
+    processStatement(new TrainRelation(this.trainNumber, relationSpl[0], relationSpl[1]));
   }
 
   parseTrainExpiry() {
@@ -75,11 +76,11 @@ module.exports = class TrainParser {
 
       if ($(li).attr("style")) {
         let expiry = a.text().split("-")[1];
-        processStatement(trainExpiry(this.trainNumber, expiry));
+        processStatement(new TrainExpiry(this.trainNumber, expiry));
       }
 
       let elviraId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-      processStatement(trainElviraId(this.trainNumber, elviraId));
+      processStatement(new TrainElviraId(this.trainNumber, elviraId));
     });
   }
 
@@ -90,22 +91,22 @@ module.exports = class TrainParser {
       .filter((i, tr) => typeof $(tr).attr("class") !== "undefined")
       .each((i, tr) => {
         let currentTrainStation = this.parseTrainStation($(tr));
-        processStatement(trainStationLink(this.trainNumber, lastTrainStation, currentTrainStation));
+        processStatement(new TrainStationLink(this.trainNumber, lastTrainStation, currentTrainStation));
         lastTrainStation = currentTrainStation;
       });
 
-    processStatement(trainStationLink(this.trainNumber, lastTrainStation, null));
+    processStatement(new TrainStationLink(this.trainNumber, lastTrainStation, null));
   }
 
   parseTrainStation(tr) {
     const tds = tr.children("td");
-    let distance = parseInt(tds.eq(0).text());
+    let intDistance = parseInt(tds.eq(0).text());
     let name = tds.eq(1).text();
     let arrival = parseTimeTuple(tds.eq(2));
     let departure = parseTimeTuple(tds.eq(3));
-    let platform = tds.eq(4).text().trim().replaceEmpty();
+    let platform = tds.eq(4).text().trim().replaceEmpty(null);
 
-    processStatement(trainStationInfo(this.trainNumber, name, { distance, platform, arrival, departure }));
+    processStatement(new TrainStationInfo(this.trainNumber, name, { intDistance, platform, arrival, departure }));
     return name;
   }
 };

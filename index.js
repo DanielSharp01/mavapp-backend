@@ -1,6 +1,5 @@
 const express = require("express");
 const app = express();
-var fs = require("fs");
 
 const api = require("./mavapi");
 const TrainParser = require("./parser/train-parser");
