@@ -1,4 +1,4 @@
-const { parseTimeTuple } = require("./parser-commons");
+const { parseTimeTuple, fixJson } = require("./parser-commons");
 const {
   trainHeader,
   trainPolyline,
@@ -37,10 +37,8 @@ module.exports = class TrainParser {
     if (contents.get(1).tagName === "br" || contents.get(1).tagName === "span") {
       name = words.slice(1, -1).join(" ").trim();
     } else {
-      name = words.slice(1).join(" ").trim();
+      name = words.slice(1).join(" ").trim().replaceEmpty();
     }
-
-    if (name === "") name = undefined;
 
     if (contents.get(1).tagName == "img") {
       type = contents.eq(1).attr("alt").trim();
@@ -52,14 +50,13 @@ module.exports = class TrainParser {
         let liC = $(li).contents();
         let spl = liC.eq(0).text().split(":").map(s => s.trim());
         type[type.length] = {
-          rel: spl[0], type: (spl[1] && spl[1] !== "")
-            ? spl[1] : liC.eq(1).attr("alt").trim()
+          rel: spl[0], type: spl[1]
+            && spl[1] !== "" ? spl[1] : liC.eq(1).attr("alt").trim()
         };
       });
     }
 
-    let visz = header.find(".viszszam2").text();
-    if (!visz || visz.trim() === "") visz = undefined;
+    let visz = header.find(".viszszam2").text().trim().replaceEmpty();
 
     let spl = header.find("font").text().slice(1, -1).split(",").map(s => s.trim());
     let relationSpl = spl[0].split(" - ").map(s => s.trim());
@@ -71,19 +68,19 @@ module.exports = class TrainParser {
   parseTrainExpiry() {
     const $ = this.ch;
 
-    $("div#vt").children("ul").first().find("li")
-      .each((i, li) => {
-        const a = $(li).children().eq(0);
-        if ($(li).attr("style")) {
-          let expiry = a.text().split("-")[1];
-          processStatement(trainExpiry(this.trainNumber, expiry));
-        }
+    $("div#vt").children("ul").first().find("li").each((i, li) => {
+      const a = $(li).children().eq(0);
+      const onclick = a.attr("onclick");
+      if (!onclick) return; // This is probably not an expiry date li
 
-        const onclick = a.attr("onclick");
-        const index = onclick.indexOf("{ v: '") + 6;
-        let elviraId = onclick.slice(index, onclick.indexOf("'", index));
-        processStatement(trainElviraId(this.trainNumber, elviraId));
-      });
+      if ($(li).attr("style")) {
+        let expiry = a.text().split("-")[1];
+        processStatement(trainExpiry(this.trainNumber, expiry));
+      }
+
+      let elviraId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
+      processStatement(trainElviraId(this.trainNumber, elviraId));
+    });
   }
 
   parseTrainStations() {
@@ -92,7 +89,7 @@ module.exports = class TrainParser {
     $("table.vt tr")
       .filter((i, tr) => typeof $(tr).attr("class") !== "undefined")
       .each((i, tr) => {
-        let currentTrainStation = this.parseTrainStation(tr, $);
+        let currentTrainStation = this.parseTrainStation($(tr));
         processStatement(trainStationLink(this.trainNumber, lastTrainStation, currentTrainStation));
         lastTrainStation = currentTrainStation;
       });
@@ -101,32 +98,14 @@ module.exports = class TrainParser {
   }
 
   parseTrainStation(tr) {
-    const $ = this.ch;
-    let trainStation = {};
-    $(tr)
-      .children("td")
-      .each((i, td) => {
-        if (i == 0) trainStation.distance = parseInt($(td).text());
-        else if (i == 1) trainStation.name = $(td).text();
-        else if (i == 2) trainStation.arrival = parseTimeTuple($(td).text());
-        else if (i == 3) trainStation.departure = parseTimeTuple($(td).text());
-        else if (i == 4) trainStation.platform = $(td).text();
-      });
+    const tds = tr.children("td");
+    let distance = parseInt(tds.eq(0).text());
+    let name = tds.eq(1).text();
+    let arrival = parseTimeTuple(tds.eq(2));
+    let departure = parseTimeTuple(tds.eq(3));
+    let platform = tds.eq(4).text().trim().replaceEmpty();
 
-    if (trainStation.platform) {
-      let str = trainStation.platform.trim();
-      trainStation.platform = str.length > 0 ? str : null;
-    }
-
-    processStatement(
-      trainStationInfo(this.trainNumber, trainStation.name, {
-        distance: trainStation.distance,
-        platform: trainStation.platform,
-        arrival: trainStation.arrival,
-        departure: trainStation.departure
-      })
-    );
-
-    return trainStation.name;
+    processStatement(trainStationInfo(this.trainNumber, name, { distance, platform, arrival, departure }));
+    return name;
   }
 };
