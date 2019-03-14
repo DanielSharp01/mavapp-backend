@@ -13,8 +13,8 @@ const processStatement = require("./processStatement");
 const cheerio = require("cheerio");
 
 module.exports = class TrainParser {
-  constructor(req, apiRes) {
-    this.req = req;
+  constructor(apiRes) {
+    this.reqParam = apiRes.d.param;
     this.ch = cheerio.load(apiRes.d.result.html, { decodeEntities: true });
     this.polyline = apiRes.d.result.line[0].points;
   }
@@ -34,8 +34,8 @@ module.exports = class TrainParser {
     const words = textNode.split(" ").map(w => w.trim());
     this.trainNumber = parseInt(words[0]);
 
-    if (typeof this.req.jo.v !== "undefined") {
-      processStatement(new TrainElviraId(this.trainNumber, this.req.jo.v));
+    if (typeof this.reqParam.v !== "undefined") {
+      processStatement(new TrainElviraId(this.trainNumber, this.reqParam.v));
     }
 
     let name;

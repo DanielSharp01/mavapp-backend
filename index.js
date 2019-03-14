@@ -1,47 +1,43 @@
 const express = require("express");
 const app = express();
 
-const api = require("./mav/mavapi");
+const { TRAIN, STATION, TRAINS } = require("./mav/apis");
 const TrainParser = require("./parser/TrainParser");
 const StationParser = require("./parser/StationParser");
 const TrainsParser = require("./parser/TrainsParser");
 
 app.use(express.static("./public"));
 
-app.get("/train/:id", (req, res, next) => {
+app.get("/train/number/:id", (req, res, next) => {
   res.header("Content-Type", "text/html; charset=utf-8");
-  api({
-    a: "TRAIN",
-    jo: { vsz: "55" + req.params.id }
-  })
-    .then(apiRes => {
-      let tp = new TrainParser(req, apiRes);
+  TRAIN({ number: req.params.id }).then(apiRes => {
+    let parser = new TrainParser(apiRes);
+    parser.run();
+    res.send(parser.ch.html());
+  }).catch(err => console.error(err));
+});
 
-      tp.run();
-      res.send(tp.ch.html());
-    })
-    .catch(err => console.error(err));
+app.get("/train/elviraid/:id", (req, res, next) => {
+  res.header("Content-Type", "text/html; charset=utf-8");
+  TRAIN({ elviraId: req.params.id }).then(apiRes => {
+    let parser = new TrainParser(apiRes);
+    parser.run();
+    res.send(parser.ch.html());
+  }).catch(err => console.error(err));
 });
 
 app.get("/station/:name", (req, res, next) => {
   res.header("Content-Type", "text/html; charset=utf-8");
-  api({
-    a: "STATION",
-    jo: { a: req.params.name }
-  }).then(apiRes => {
-    let sp = new StationParser(apiRes);
-
-    sp.run();
-    res.send(sp.ch.html());
+  STATION(req.params.name).then(apiRes => {
+    let parser = new StationParser(apiRes);
+    parser.run();
+    res.send(parser.ch.html());
   }).catch(err => console.error(err));
 });
 
 app.get("/trains", (req, res, next) => {
   res.header("Content-Type", "text/html; charset=utf-8");
-  api({
-    a: "TRAINS",
-    jo: { pre: true, history: false, id: false }
-  }).then(apiRes => {
+  TRAINS().then(apiRes => {
     let parser = new TrainsParser(apiRes);
     parser.run();
     res.send("<pre>" + JSON.stringify(parser.trains, null, 4) + "</pre");
