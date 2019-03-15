@@ -17,7 +17,7 @@ module.exports = class TrainParser {
       processStatement(new TrainElviraId(trainNumber, train["@ElviraID"]));
       let relSpl = train["@Relation"].split(" - ");
       processStatement(new TrainRelation(trainNumber, relSpl[0], relSpl[1]));
-      processStatement(new TrainRealTimeInfo(train["@ElviraID"], trainNumber,
+      processStatement(new TrainRealTimeInfo(train["@ElviraID"],
         { latitude: train["@Lat"], longitude: train["@Lon"] }, train["@Delay"]));
     });
   }

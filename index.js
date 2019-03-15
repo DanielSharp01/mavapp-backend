@@ -6,6 +6,13 @@ const TrainParser = require("./parser/TrainParser");
 const StationParser = require("./parser/StationParser");
 const TrainsParser = require("./parser/TrainsParser");
 
+let objectRepository = require("./objectRepository");
+objectRepository.Station = require("./model/Station");
+objectRepository.Train = require("./model/Train");
+objectRepository.TrainInstance = require("./model/TrainInstance");
+objectRepository.TrainStation = require("./model/TrainStation");
+objectRepository.TrainStationLink = require("./model/TrainStationLink");
+
 app.use(express.static("./public"));
 
 app.get("/train/number/:id", (req, res, next) => {

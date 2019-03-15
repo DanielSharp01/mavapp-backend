@@ -4,6 +4,7 @@ const {
   TrainPolyline,
   TrainExpiry,
   TrainRelation,
+  StationDisplayName,
   TrainStationInfo,
   TrainStationLink,
   TrainElviraId
@@ -15,14 +16,22 @@ const cheerio = require("cheerio");
 module.exports = class TrainParser {
   constructor(apiRes) {
     this.reqParam = apiRes.d.param;
+
+    if (apiRes.d.result.line.length === 0) {
+      this.failed = true;
+      return;
+    }
+
     this.ch = cheerio.load(apiRes.d.result.html, { decodeEntities: true });
     this.polyline = apiRes.d.result.line[0].points;
   }
 
   run() {
+    if (this.failed) return;
+
     this.parseTrainHeader();
     this.parseTrainStations();
-    this.parseTrainExpiry();
+    // this.parseTrainExpiry();
     processStatement(new TrainPolyline(this.trainNumber, this.polyline));
   }
 
@@ -112,6 +121,7 @@ module.exports = class TrainParser {
     let departure = parseTimeTuple(tds.eq(3));
     let platform = tds.eq(4).text().trim().replaceEmpty(null);
 
+    processStatement(new StationDisplayName(name));
     processStatement(new TrainStationInfo(this.trainNumber, name, { intDistance, platform, arrival, departure }));
     return name;
   }
