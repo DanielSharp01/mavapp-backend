@@ -1,8 +1,8 @@
 const api = require("./mavapi");
 
-module.exports.TRAIN = ({ number, elviraId }) => api({
+module.exports.TRAIN = ({ number, elviraDateId }) => api({
   a: "TRAIN",
-  jo: { vsz: number ? ("55" + number) : undefined, v: elviraId }
+  jo: { vsz: number ? ("55" + number) : undefined, v: elviraDateId }
 });
 
 module.exports.STATION = (name) => api({

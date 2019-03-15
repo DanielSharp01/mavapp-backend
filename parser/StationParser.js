@@ -3,11 +3,13 @@ const {
   TrainHeader,
   TrainRelation,
   TrainStationInfo,
-  TrainElviraId
+  TrainElviraDateId
 } = require("./statements");
 
 const processStatement = require("./processStatement");
 const cheerio = require("cheerio");
+const moment = require("moment");
+const { momentCombine, fixDateOrder } = require("./timeCommons");
 
 module.exports = class StationParser {
   constructor(apiRes) {
@@ -23,7 +25,7 @@ module.exports = class StationParser {
     const $ = this.ch;
     const header = $("table.af th").first();
     this.name = header.contents().eq(0).text();
-    this.date = header.find("font").text();
+    this.date = moment(header.find("font").text(), "YYYY.MM.DD");
   }
 
   parseStationTrains() {
@@ -45,11 +47,31 @@ module.exports = class StationParser {
     let trainTdC = trainTd.contents();
     let trainA = trainTdC.eq(0).first();
     let trainNumber = trainA.text();
+
+    if (arrival) {
+      arrival.scheduled = arrival.scheduled
+        && momentCombine(this.date, moment(arrival.scheduled, "HH:mm"));
+      arrival.actual = arrival.actual
+        && momentCombine(this.date, moment(arrival.actual, "HH:mm"));
+    }
+    if (departure) {
+      departure.scheduled = departure && departure.scheduled
+        && momentCombine(this.date, moment(departure.scheduled, "HH:mm"));
+      departure.actual = departure.actual
+        && momentCombine(this.date, moment(departure.actual, "HH:mm"));
+    }
+
+    fixDateOrder(arrival && arrival.scheduled, arrival && arrival.actual);
+    fixDateOrder(departure && departure.scheduled, departure && departure.actual);
+
+    fixDateOrder(arrival && arrival.scheduled, departure && departure.scheduled);
+    fixDateOrder(arrival && arrival.actual, departure && departure.actual);
+
     processStatement(new TrainStationInfo(trainNumber, this.name, { arrival, departure, platform }));
 
     let onclick = trainA.attr("onclick");
-    let elviraId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-    processStatement(new TrainElviraId(trainNumber, elviraId));
+    let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
+    processStatement(new TrainElviraDateId(trainNumber, elviraDateId));
 
     let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
     let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
@@ -61,12 +83,10 @@ module.exports = class StationParser {
     let toRel = relSpl[1] && relSpl[1].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
 
     if (fromRel)
-      processStatement(new TrainStationInfo(trainNumber, fromRel[1],
-        { departure: { scheduled: fromRel[0], actual: null }, arrival: null }));
+      processStatement(new TrainStationInfo(trainNumber, fromRel[1], {}));
 
     if (toRel)
-      processStatement(new TrainStationInfo(trainNumber, toRel[0],
-        { arrival: { scheduled: toRel[1], actual: null }, departure: null }));
+      processStatement(new TrainStationInfo(trainNumber, toRel[0], {}));
 
     processStatement(new TrainRelation(trainNumber, fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name));
   }

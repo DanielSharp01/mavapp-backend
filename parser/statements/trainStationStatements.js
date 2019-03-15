@@ -1,5 +1,6 @@
 const objectRepository = require("../../objectRepository");
 const { normalizeStationName } = require("./stationStatements");
+const moment = require("moment");
 const mongoose = require("mongoose");
 
 let idMap = {};
@@ -8,11 +9,13 @@ function findOrCreate(trainNumber, normName) {
   return new Promise(async (resolve, reject) => {
     try {
       let trainStation = await objectRepository.TrainStation.findOne({ trainNumber, normName });
-      if (!trainStation) {
-        let idMapKey = trainNumber + "." + normName;
-        idMap[idMapKey] = idMap[idMapKey] || mongoose.Types.ObjectId();
+      let key = trainNumber + "." + normName;
+      if (trainStation) {
+        delete idMap[key];
+      } else {
+        idMap[key] = idMap[key] || mongoose.Types.ObjectId();
         trainStation = new objectRepository.TrainStation();
-        trainStation._id = idMap[idMapKey];
+        trainStation._id = idMap[key];
         trainStation.trainNumber = trainNumber;
         trainStation.normName = normName;
       }

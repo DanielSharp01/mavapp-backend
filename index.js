@@ -26,7 +26,7 @@ app.get("/train/number/:id", (req, res, next) => {
 
 app.get("/train/elviraid/:id", (req, res, next) => {
   res.header("Content-Type", "text/html; charset=utf-8");
-  TRAIN({ elviraId: req.params.id }).then(apiRes => {
+  TRAIN({ elviraDateId: req.params.id }).then(apiRes => {
     let parser = new TrainParser(apiRes);
     parser.run();
     res.send(parser.ch.html());
@@ -47,7 +47,7 @@ app.get("/trains", (req, res, next) => {
   TRAINS().then(apiRes => {
     let parser = new TrainsParser(apiRes);
     parser.run();
-    res.send("<pre>" + JSON.stringify(parser.trains, null, 4) + "</pre");
+    res.send("<pre>" + JSON.stringify(parser.trains, null, 4) + "</pre>");
   }).catch(err => console.error(err));
 });
 

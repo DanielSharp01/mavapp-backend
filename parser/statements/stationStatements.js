@@ -7,7 +7,9 @@ function findOrCreate(normName) {
   return new Promise(async (resolve, reject) => {
     try {
       let station = await objectRepository.Station.findOne({ normName });
-      if (!station) {
+      if (station) {
+        delete idMap[normName];
+      } else {
         idMap[normName] = idMap[normName] || mongoose.Types.ObjectId();
         station = new objectRepository.Station();
         station._id = idMap[normName];

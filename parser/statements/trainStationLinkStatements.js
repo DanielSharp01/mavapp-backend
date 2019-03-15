@@ -9,12 +9,12 @@ function create(trainNumber, fromNormName, toNormName) {
     try {
       let link = await objectRepository.TrainStationLink.findOne({ trainNumber, fromNormName, toNormName });
       if (!link) {
-        let idMapKey = trainNumber + "." + fromNormName + "." + toNormName;
-        if (idMap[idMapKey]) return resolve(false);
+        let key = trainNumber + "." + fromNormName + "." + toNormName;
+        if (idMap[key]) return resolve(false);
 
-        idMap[idMapKey] = mongoose.Types.ObjectId();
+        idMap[key] = mongoose.Types.ObjectId();
         link = new objectRepository.TrainStationLink();
-        link._id = idMap[idMapKey];
+        link._id = idMap[key];
         link.trainNumber = trainNumber;
         link.fromNormName = fromNormName;
         link.toNormName = toNormName;

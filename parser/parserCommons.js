@@ -1,3 +1,5 @@
+const moment = require("moment");
+
 Object.defineProperty(String.prototype, "replaceEmpty", {
   value: function replaceEmpty(def = undefined) {
     return this.length == 0 ? def : this.toString();
@@ -15,6 +17,14 @@ function parseTimeTuple(elem) {
   return timeTuple;
 }
 
+function splitElviraDateId(elviraDateId) {
+  if (!elviraDateId) return undefined;
+  const spl = elviraDateId.split("_");
+  if (spl.length !== 2) return undefined;
+
+  return { elviraId: parseInt(spl[0]), date: moment(spl[1], "YYMMDD") };
+}
+
 function fixJson(json) {
   // Courtesy of: https://stackoverflow.com/a/39050609/2132821
   return json.replace(/:\s*"([^"]*)"/g, (match, p1) => ': "' + p1.replace(/:/g, '@colon@') + '"')
@@ -22,4 +32,4 @@ function fixJson(json) {
     .replace(/(['"])?([a-z0-9A-Z_]+)(['"])?\s*:/g, '"$2": ').replace(/@colon@/g, ':')
 }
 
-module.exports = { parseTimeTuple, fixJson };
+module.exports = { parseTimeTuple, splitElviraDateId, fixJson };

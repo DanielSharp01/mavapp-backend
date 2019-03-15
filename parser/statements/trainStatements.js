@@ -1,6 +1,8 @@
 const objectRepository = require("../../objectRepository");
 const mongoose = require("mongoose");
 const { normalizeStationName } = require("./stationStatements");
+const moment = require("moment");
+const { splitElviraDateId } = require("../parserCommons");
 
 let idMap = {};
 
@@ -80,14 +82,13 @@ class TrainPolyline {
 
 class TrainExpiry {
   constructor(trainNumber, expiry) {
-    Object.assign(this, { timestamp: Date.now(), trainNumber, expiry });
+    Object.assign(this, { timestamp: Date.now(), trainNumber, expiry: moment(expiry, "YYYY.MM.DD") });
   }
 
   process() {
     return new Promise(async (resolve, reject) => {
       try {
         let train = await findOrCreate(this.trainNumber);
-        console.log(train.isNew);
         train.expiry = this.expiry;
         resolve(await addOrUpdate(train));
       }
@@ -117,11 +118,11 @@ class TrainRelation {
   }
 }
 
-class TrainElviraId {
-  constructor(trainNumber, elviraId) {
+class TrainElviraDateId {
+  constructor(trainNumber, elviraDateId) {
     Object.assign(this, {
       timestamp: Date.now(), trainNumber,
-      elviraId: elviraId && parseInt(elviraId.split("_")[0])
+      elviraId: splitElviraDateId(elviraDateId).elviraId
     });
   }
 
@@ -144,5 +145,5 @@ module.exports = {
   TrainPolyline,
   TrainExpiry,
   TrainRelation,
-  TrainElviraId
+  TrainElviraDateId
 };
