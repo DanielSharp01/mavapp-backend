@@ -51,6 +51,11 @@ app.get("/trains", (req, res, next) => {
   }).catch(err => console.error(err));
 });
 
+app.get("/test", (req, res, next) => {
+  res.header("Content-Type", "text/html; charset=utf-8");
+  res.send('<canvas></canvas><script src="Vec2.js"></script><script src="polyline.js"></script><script src="geoMath.js"></script><script src="test.js"></script>')
+});
+
 app.listen(3000, () => {
   console.log(":3000");
 });
