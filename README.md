@@ -6,7 +6,7 @@ Node.js backend that transforms the Hungarian Railway Company (MÁV)'s data into
 
 [MAV (the Hungarian Railway Company)](https://www.mavcsoport.hu/) does not know about the existense of this project (for all I know) and **DID NOT** grant access to their data. Use this backend with caution in production, you may break some data protection laws.
 
-I do and will not distribute any database snapshots.
+I do not and will not distribute any database snapshots.
 
 ## A word about OpenStreetMap
 
