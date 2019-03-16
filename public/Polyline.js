@@ -1,8 +1,6 @@
 class Polyline {
-  constructor({ encodedPolyline, points }) {
-    if (points) this.points = points;
-    else if (encodedPolyline) this.points = decodePolyline(encodedPolyline);
-    else this.points = [];
+  constructor(points = []) {
+    this.points = points;
   }
 
   atDistance(distance) {

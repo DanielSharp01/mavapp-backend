@@ -23,12 +23,10 @@ function clearCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-let polyline = new Polyline({});
+let polyline = new Polyline();
 let projecting = false;
 
-
-function drawPolyline(encodedPolyline) {
-  polyline = new Polyline({ encodedPolyline });
+function drawPolyline(polyline) {
   for (let i = 0; i < polyline.points.length; i++) {
     drawCircle(polyline.points[i], 3, "blue");
     if (i >= 1) {
