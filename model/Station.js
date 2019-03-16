@@ -9,7 +9,8 @@ const StationSchema = new Schema({
   position: {
     latitude: Number,
     longitude: Number
-  }
+  },
+  expiryDate: Date
 });
 
 function normalizeStationName(name) {

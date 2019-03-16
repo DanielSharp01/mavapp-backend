@@ -14,7 +14,7 @@ const processStatement = require("./processStatement");
 const cheerio = require("cheerio");
 const moment = require("moment");
 const { momentCombine, fixDateOrder } = require("./timeCommons");
-const { resolveRealDistance } = require("../stationResolver");
+const { resolveRealDistance } = require("../resolveStation");
 
 module.exports = class TrainParser {
   constructor(apiRes) {
