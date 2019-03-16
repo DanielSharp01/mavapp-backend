@@ -1,6 +1,6 @@
 const objectRepository = require("../../objectRepository");
 const mongoose = require("mongoose");
-const { normalizeStationName } = require("./stationStatements");
+const { normalizeStationName } = require("../../model/Station");
 const moment = require("moment");
 const { splitElviraDateId } = require("../parserCommons");
 

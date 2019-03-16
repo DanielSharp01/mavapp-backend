@@ -4,7 +4,6 @@ const {
   TrainPolyline,
   TrainExpiry,
   TrainRelation,
-  StationDisplayName,
   TrainStationInfo,
   TrainStationLink,
   TrainElviraDateId
@@ -160,7 +159,6 @@ module.exports = class TrainParser {
     lastMoments.departure.scheduled = departure && departure.scheduled;
     lastMoments.departure.actual = departure && (departure.actual || departure.scheduled);
 
-    processStatement(new StationDisplayName(name));
     processStatement(new TrainStationInfo(this.trainNumber, name, { intDistance, platform, arrival, departure }));
     return name;
   }
