@@ -6,6 +6,7 @@ const {
   TrainRelation,
   TrainStationInfo,
   TrainStationLink,
+  TrainStationRealDistance,
   TrainElviraDateId
 } = require("./statements");
 
@@ -13,6 +14,7 @@ const processStatement = require("./processStatement");
 const cheerio = require("cheerio");
 const moment = require("moment");
 const { momentCombine, fixDateOrder } = require("./timeCommons");
+const { resolveRealDistance } = require("../stationResolver");
 
 module.exports = class TrainParser {
   constructor(apiRes) {
@@ -128,6 +130,10 @@ module.exports = class TrainParser {
     let arrival = parseTimeTuple(tds.eq(2));
     let departure = parseTimeTuple(tds.eq(3));
     let platform = tds.eq(4).text().trim().replaceEmpty(null);
+
+    resolveRealDistance(this.polyline, name)
+      .then(res => processStatement(new TrainStationRealDistance(this.trainNumber, name, res)))
+      .catch(err => console.log(err));
 
     if (arrival) {
       arrival.scheduled = arrival.scheduled

@@ -57,7 +57,7 @@ function seedWithData() {
           let station = new stationModel();
           station.displayName = e.tags.name;
           station.normName = e.tags.normName;
-          station.position = { lat: e.lat, lon: e.lon };
+          station.position = { latitude: e.lat, longitude: e.lon };
           console.log(`Inserting '${station.normName}'`);
           return station.save();
         });
