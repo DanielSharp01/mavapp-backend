@@ -11,6 +11,8 @@ Node.js backend that transforms the Hungarian Railway Company (MÁV)'s data into
 
 ## /train/number/:number or /train/elviraid/:elviraid
 
+Returns a single train by number or elviraid.
+
 ### Parameters
 
 `:number` - Number of the train. This number is publically known.
@@ -61,6 +63,7 @@ Train stations are in order from-to.
     ],
     "instance-today": {
       "status": "running",
+      "date": "2019-03-16",
       "position": {
         "latitude": 47.5116349,
         "longitude": 19.1010078
@@ -73,6 +76,8 @@ Train stations are in order from-to.
 ```
 
 ## /station/:name
+
+Returns a single station by name.
 
 ### Parameters
 
@@ -125,6 +130,7 @@ All times are in UTC.
         "full-knowledge": false,
         "instance-today": {
           "status": "running",
+          "date": "2019-03-16",
           "position": {
             "latitude": 47.5116349,
             "longitude": 19.1010078
@@ -140,6 +146,8 @@ All times are in UTC.
 ```
 
 ## /direct-route/:fromname/:toname
+
+Returns all trains going from A to B without change.
 
 ### Parameters
 
@@ -188,6 +196,7 @@ All times are in UTC.
       "full-knowledge": false,
       "instance-today": {
         "status": "running",
+        "date": "2019-03-16",
         "position": {
           "latitude": 47.5116349,
           "longitude": 19.1010078
@@ -203,7 +212,7 @@ All times are in UTC.
 
 ## /station-near?position=:lat,:lon&distance=:distance
 
-This endpoint does not return the trains passing through each station.
+Returns stations near a specific point. This endpoint does not return the trains passing through each station for that information use the `/station` endpoint.
 
 ### Parameters
 
@@ -236,7 +245,7 @@ This endpoint does not return the trains passing through each station.
 
 ## /train-instances/[:status-filter]
 
-This endpoint does not return train stations and other misc information about the train. For those use one of the `/train` endpoints.
+Returns all train instances matching a specific status filter (filter is optional). This endpoint does not return train stations and other misc information about the train. For those use one of the `/train` endpoints.
 
 ### Parameters
 
@@ -262,6 +271,7 @@ This endpoint does not return train stations and other misc information about th
     {
       "number": 2628,
       "elvira-id": 5609125,
+      "date": "2019-03-16",
       "status": "running",
       "position": {
         "latitude": 47.5116349,
@@ -276,6 +286,8 @@ This endpoint does not return train stations and other misc information about th
 ```
 
 ## /train-instance/:elviradateid
+
+Returns a single train instance identified with its elviradateid.
 
 ### Parameters
 
@@ -301,6 +313,7 @@ Example: Train with id `5609125` @ 2019 March 16 would become `5609125_190316`.
   "result": {
     "number": 2628,
     "elvira-id": 5609125,
+    "date": "2019-03-16",
     "name": null,
     "visz-number": "S50",
     "type": "local",
