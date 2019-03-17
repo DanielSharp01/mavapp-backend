@@ -154,6 +154,7 @@ Returns all trains going from A to B without change.
 Both names will still be normalized, which roughly means all accented characters will be replaced by their non accented counterpart and redundant information such as "train station", "railway station" will be removed. Will also be converted to lowercase.
 
 `:fromname` - trains will show up that start from here
+
 `:toname` - trains will show up that go to here
 
 ### Reponse
@@ -210,7 +211,7 @@ All times are in UTC.
 }
 ```
 
-## /station-near?position=:lat,:lon&distance=:distance
+## /stations-near?position=:lat,:lon&distance=:distance
 
 Returns stations near a specific point. This endpoint does not return the trains passing through each station for that information use the `/station` endpoint.
 

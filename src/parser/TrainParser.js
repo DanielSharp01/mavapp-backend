@@ -1,4 +1,4 @@
-const { parseTimeTuple, fixJson } = require("./parserCommons");
+const { parseTimeTuple, fixJson } = require("../utils/parserUtils");
 const {
   TrainHeader,
   TrainPolyline,
@@ -10,10 +10,10 @@ const {
   TrainElviraDateId
 } = require("./statements");
 
-const processStatement = require("./processStatement");
+const processStatement = require("../utils/processStatement");
 const cheerio = require("cheerio");
 const moment = require("moment");
-const { momentCombine, fixDateOrder } = require("./timeCommons");
+const { momentCombine, fixDateOrder } = require("../utils/timeUtils");
 const { resolveRealDistance } = require("../resolveStation");
 
 module.exports = class TrainParser {
@@ -27,6 +27,11 @@ module.exports = class TrainParser {
 
     this.ch = cheerio.load(apiRes.d.result.html, { decodeEntities: true });
     this.polyline = apiRes.d.result.line[0].points;
+    this.promises = [];
+  }
+
+  pushAndProcessStatement(statement) {
+    this.promises.push(processStatement(statement));
   }
 
   run() {
@@ -35,7 +40,8 @@ module.exports = class TrainParser {
     this.parseTrainHeader();
     this.parseTrainStations();
     this.parseTrainExpiry();
-    processStatement(new TrainPolyline(this.trainNumber, this.polyline));
+    this.pushAndProcessStatement(new TrainPolyline(this.trainNumber, this.polyline));
+    return Promise.all(this.promises);
   }
 
   parseTrainHeader() {
@@ -47,7 +53,7 @@ module.exports = class TrainParser {
     this.trainNumber = parseInt(words[0]);
 
     if (typeof this.reqParam.v !== "undefined") {
-      processStatement(new TrainElviraDateId(this.trainNumber, this.reqParam.v));
+      this.pushAndProcessStatement(new TrainElviraDateId(this.trainNumber, this.reqParam.v));
     }
 
     let name;
@@ -81,13 +87,13 @@ module.exports = class TrainParser {
     this.date = moment(spl[1], "YYYY.MM.DD.");
     let relationSpl = spl[0].split(" - ").map(s => s.trim());
 
-    processStatement(new TrainHeader(this.trainNumber, type, spl[1], { name, visz }));
-    processStatement(new TrainRelation(this.trainNumber, relationSpl[0], relationSpl[1]));
+    this.pushAndProcessStatement(new TrainHeader(this.trainNumber, type, spl[1], { name, visz }));
+    this.pushAndProcessStatement(new TrainRelation(this.trainNumber, relationSpl[0], relationSpl[1]));
   }
 
   parseTrainExpiry() {
     const $ = this.ch;
-
+    let explicitExpiry = false;
     $("div#vt").children("ul").first().find("li").each((i, li) => {
       const a = $(li).children().eq(0);
       const onclick = a.attr("onclick");
@@ -95,12 +101,18 @@ module.exports = class TrainParser {
 
       if ($(li).attr("style")) {
         let expiry = a.text().split("-")[1];
-        processStatement(new TrainExpiry(this.trainNumber, expiry));
+        this.pushAndProcessStatement(new TrainExpiry(this.trainNumber, expiry));
+        explicitExpiry = true;
       }
 
       let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-      processStatement(new TrainElviraDateId(this.trainNumber, elviraDateId));
+      this.pushAndProcessStatement(new TrainElviraDateId(this.trainNumber, elviraDateId));
     });
+
+    if (!explicitExpiry) {
+      this.pushAndProcessStatement(new TrainExpiry(this.trainNumber,
+        moment({ year: moment().year() + 1, month: 0, date: 1 })));
+    }
   }
 
   parseTrainStations() {
@@ -113,14 +125,14 @@ module.exports = class TrainParser {
     };
 
     $("table.vt tr")
-      .filter((i, tr) => typeof $(tr).attr("class") !== "undefined")
+      .filter((i, tr) => (typeof $(tr).attr("class") !== "undefined") && (typeof $(tr).attr("id") === "undefined"))
       .each((i, tr) => {
         let currentTrainStation = this.parseTrainStation($(tr), lastMoments);
-        processStatement(new TrainStationLink(this.trainNumber, lastTrainStation, currentTrainStation));
+        this.pushAndProcessStatement(new TrainStationLink(this.trainNumber, lastTrainStation, currentTrainStation));
         lastTrainStation = currentTrainStation;
       });
 
-    processStatement(new TrainStationLink(this.trainNumber, lastTrainStation, null));
+    this.pushAndProcessStatement(new TrainStationLink(this.trainNumber, lastTrainStation, null));
   }
 
   parseTrainStation(tr, lastMoments) {
@@ -132,7 +144,7 @@ module.exports = class TrainParser {
     let platform = tds.eq(4).text().trim().replaceEmpty(null);
 
     resolveRealDistance(this.polyline, name)
-      .then(res => processStatement(new TrainStationRealDistance(this.trainNumber, name, res)))
+      .then(res => this.pushAndProcessStatement(new TrainStationRealDistance(this.trainNumber, name, res)))
       .catch(err => console.log(err));
 
     if (arrival) {
@@ -165,7 +177,7 @@ module.exports = class TrainParser {
     lastMoments.departure.scheduled = departure && departure.scheduled;
     lastMoments.departure.actual = departure && (departure.actual || departure.scheduled);
 
-    processStatement(new TrainStationInfo(this.trainNumber, name, { intDistance, platform, arrival, departure }));
+    this.pushAndProcessStatement(new TrainStationInfo(this.trainNumber, name, { intDistance, platform, arrival, departure }));
     return name;
   }
 };

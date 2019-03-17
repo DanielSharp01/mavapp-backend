@@ -1,6 +1,5 @@
 const objectRepository = require("../../objectRepository");
-const { normalizeStationName } = require("../../model/Station");
-const moment = require("moment");
+const { normalizeStationName } = require("../../utils/parserUtils");
 const mongoose = require("mongoose");
 
 let idMap = {};

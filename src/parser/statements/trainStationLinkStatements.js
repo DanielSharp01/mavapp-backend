@@ -1,6 +1,6 @@
 const objectRepository = require("../../objectRepository");
 const mongoose = require("mongoose");
-const { normalizeStationName } = require("./trainStationStatements");
+const { normalizeStationName } = require("../../utils/parserUtils");
 
 let idMap = {};
 
@@ -40,6 +40,7 @@ class TrainStationLink {
       try {
         let link = await create(this.trainNumber, this.fromNormName, this.toNormName);
         if (link) resolve(await link.save());
+        else resolve(false);
       }
       catch (err) {
         reject(err);

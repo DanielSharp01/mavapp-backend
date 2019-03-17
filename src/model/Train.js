@@ -1,5 +1,6 @@
-const db = require("../db");
+const db = require("./db");
 const Schema = require("mongoose").Schema;
+const moment = require("moment");
 
 const TrainSchema = new Schema({
   number: { type: Number, required: true, unique: true, index: true },
@@ -13,6 +14,10 @@ const TrainSchema = new Schema({
   },
   expiry: Date,
   encodedPolyline: String
+});
+
+TrainSchema.virtual("fullKnowledge").get(function () {
+  return (typeof this.expiry !== "undefined") && !moment(this.expiry).isBefore(moment())
 });
 
 module.exports = db.model("Train", TrainSchema);

@@ -1,6 +1,6 @@
 const objectRepository = require("../../objectRepository");
 const mongoose = require("mongoose");
-const { splitElviraDateId } = require("../parserCommons");
+const { splitElviraDateId } = require("../../utils/parserUtils");
 
 let idMap = {};
 

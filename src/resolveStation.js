@@ -1,9 +1,9 @@
 const objectRepository = require("./objectRepository");
-const Vec2 = require("./Vec2");
-const Polyline = require("./Polyline");
+const Vec2 = require("./math/Vec2");
+const Polyline = require("./math/Polyline");
 const decodePolyline = Polyline.decodePolyline;
-const { latLonToHunWebMerc, HUN_WEB_MERC_MPU } = require("./geoMath");
-const { normalizeStationName } = require("./model/Station");
+const { latLonToHunWebMerc, HUN_WEB_MERC_MPU } = require("./math/geoMath");
+const { normalizeStationName } = require("./utils/parserUtils");
 
 function resolveStationLocation(name) {
   return new Promise(async (resolve, reject) => {
