@@ -1,6 +1,8 @@
 const db = require("./db");
-const Schema = require("mongoose").Schema;
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 const moment = require("moment");
+const { splitElviraDateId } = require("../utils/parserUtils");
 
 const TrainSchema = new Schema({
   number: { type: Number, required: true, unique: true, index: true },
@@ -21,3 +23,28 @@ TrainSchema.virtual("fullKnowledge").get(function () {
 });
 
 module.exports = db.model("Train", TrainSchema);
+
+TrainSchema.statics.findOrCreate = async function (number) {
+  const Train = module.exports;
+  let res = await Train.findOne({ number });
+  if (res) return res;
+
+  res = new Train();
+  res._id = mongoose.Types.ObjectId();
+  res.number = number;
+  return res;
+}
+
+TrainSchema.methods.setHeader = function (type, date, { name, visz }) {
+  this.type = type;
+  if (typeof this.name !== "undefined") this.name = name;
+  if (typeof this.visz !== "undefined") this.visz = visz;
+}
+
+TrainSchema.methods.setRelation = function (from, to) {
+  this.relation = { from: from, to: to };
+}
+
+TrainSchema.methods.setElviraDateId = function (elviraDateId) {
+  this.elviraId = splitElviraDateId(elviraDateId).elviraId;
+}

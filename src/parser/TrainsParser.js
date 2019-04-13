@@ -1,30 +1,30 @@
-const {
-  TrainElviraDateId,
-  TrainRelation,
-  TrainRealTimeInfo
-} = require("./statements");
-
-const processStatement = require("../utils/processStatement");
-
 module.exports = class TrainParser {
   constructor(apiRes) {
     this.trains = apiRes.d.result.Trains.Train;
-    this.promises = [];
-  }
-
-  pushAndProcessStatement(statement) {
-    this.promises.push(processStatement(statement));
   }
 
   run() {
     this.trains.forEach(train => {
       const trainNumber = parseInt(train["@TrainNumber"].slice(2));
-      this.pushAndProcessStatement(new TrainElviraDateId(trainNumber, train["@ElviraID"]));
+      const trainObj = Train.findOrCreate(trainNumber);
+      const trainInstance = TrainInstace.findOrCreate(splitElviraDateId(train["@ElviraID"]));
+      trainObj.setElviraDateId(train["@ElviraID"]);
       let relSpl = train["@Relation"].split(" - ");
-      this.pushAndProcessStatement(new TrainRelation(trainNumber, relSpl[0], relSpl[1]));
-      this.pushAndProcessStatement(new TrainRealTimeInfo(train["@ElviraID"],
-        { latitude: train["@Lat"], longitude: train["@Lon"] }, train["@Delay"]));
+      trainObj.setRelation(relSpl[0], relSpl[1]);
+
+      const fromTS = TrainStation.findOrCreate(trainNumber, relSpl[0]);
+      fromTS.save(); // TODO: Promises
+
+      const fromTS = TrainStation.findOrCreate(trainNumber, relSpl[1]);
+      toTS.save(); // TODO: Promises
+
+
+      trainInstance.position = { latitude: train["@Lat"], longitude: train["@Lon"] };
+      trainInstance.delay = train["@Delay"];
+
+      // TODO: Promises
+      trainObj.save();
+      trainInstance.save();
     });
-    return Promise.all(this.promises);
   }
 };

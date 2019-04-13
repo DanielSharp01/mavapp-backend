@@ -1,12 +1,5 @@
 const { parseTimeTuple, fixJson } = require("../utils/parserUtils");
-const {
-  TrainHeader,
-  TrainRelation,
-  TrainStationInfo,
-  TrainElviraDateId
-} = require("./statements");
-
-const processStatement = require("../utils/processStatement");
+const { normalizeStationName } = require("../utils/parserUtils");
 const cheerio = require("cheerio");
 const moment = require("moment");
 const { momentCombine, fixDateOrder } = require("../utils/timeUtils");
@@ -14,17 +7,11 @@ const { momentCombine, fixDateOrder } = require("../utils/timeUtils");
 module.exports = class StationParser {
   constructor(apiRes) {
     this.ch = cheerio.load(apiRes.d.result, { decodeEntities: true });
-    this.promises = [];
   }
 
   run() {
     this.parseStationHeader();
     this.parseStationTrains();
-    return Promise.all(this.promises);
-  }
-
-  pushAndProcessStatement(statement) {
-    this.promises.push(processStatement(statement));
   }
 
   parseStationHeader() {
@@ -73,27 +60,37 @@ module.exports = class StationParser {
     fixDateOrder(arrival && arrival.scheduled, departure && departure.scheduled);
     fixDateOrder(arrival && arrival.actual, departure && departure.actual);
 
-    this.pushAndProcessStatement(new TrainStationInfo(trainNumber, this.name, { arrival, departure, platform }));
+    const train = Train.findOrCreate(trainNumber);
+    const trainStation = TrainStation.findOrCreate(trainNumber, normalizeStationName(this.name));
+    trainStation.setInfo({ arrival, departure, platform });
 
     let onclick = trainA.attr("onclick");
     let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-    this.pushAndProcessStatement(new TrainElviraDateId(trainNumber, elviraDateId));
+    train.setElviraDateId(elviraDateId);
 
     let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
     let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
     let type = nameTypeSpl[nameTypeSpl.length - 1].trim();
-    this.pushAndProcessStatement(new TrainHeader(trainNumber, type, this.date, { name }));
+    train.setHeader(type, this.date, { name });
 
     let relSpl = trainTdC.eq(3).text().split(" -- ").map(s => s.trim().replaceEmpty());
     let fromRel = relSpl[0] && relSpl[0].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
     let toRel = relSpl[1] && relSpl[1].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
 
-    if (fromRel)
-      this.pushAndProcessStatement(new TrainStationInfo(trainNumber, fromRel[1], {}));
+    if (fromRel) {
+      const fromTS = TrainStation.findOrCreate(trainNumber, fromRel[1]);
+      fromTS.save(); // TODO: Promises
+    }
 
-    if (toRel)
-      this.pushAndProcessStatement(new TrainStationInfo(trainNumber, toRel[0], {}));
+    if (toRel) {
+      const fromTS = TrainStation.findOrCreate(trainNumber, toRel[0]);
+      toTS.save(); // TODO: Promises
+    }
 
-    this.pushAndProcessStatement(new TrainRelation(trainNumber, fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name));
+    train.setRelation(fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name);
+
+    // TODO: Promises
+    train.save();
+    trainStation.save();
   }
 };
