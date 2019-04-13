@@ -1,9 +1,11 @@
 module.exports = class TrainParser {
   constructor(apiRes) {
     this.trains = apiRes.d.result.Trains.Train;
+    this.promises = [];
   }
 
   run() {
+    let self = this;
     this.trains.forEach(train => {
       const trainNumber = parseInt(train["@TrainNumber"].slice(2));
       const trainObj = Train.findOrCreate(trainNumber);
@@ -13,18 +15,19 @@ module.exports = class TrainParser {
       trainObj.setRelation(relSpl[0], relSpl[1]);
 
       const fromTS = TrainStation.findOrCreate(trainNumber, relSpl[0]);
-      fromTS.save(); // TODO: Promises
+      self.promises.push(fromTS.save());
 
-      const fromTS = TrainStation.findOrCreate(trainNumber, relSpl[1]);
-      toTS.save(); // TODO: Promises
+      const toTS = TrainStation.findOrCreate(trainNumber, relSpl[1]);
+      self.promises.push(toTS.save());
 
 
       trainInstance.position = { latitude: train["@Lat"], longitude: train["@Lon"] };
       trainInstance.delay = train["@Delay"];
 
-      // TODO: Promises
-      trainObj.save();
-      trainInstance.save();
+      self.promises.push(trainObj.save());
+      self.promises.push(trainInstance.save());
     });
+
+    return Promise.all(this.promises);
   }
 };

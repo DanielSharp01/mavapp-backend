@@ -16,6 +16,7 @@ module.exports = class TrainParser {
 
     this.ch = cheerio.load(apiRes.d.result.html, { decodeEntities: true });
     this.polyline = apiRes.d.result.line[0].points;
+    this.promises = [];
   }
 
   run() {
@@ -25,7 +26,8 @@ module.exports = class TrainParser {
     this.parseTrainStations();
     this.parseTrainExpiry();
     this.train.encodedPolyline = this.polyline;
-    this.train.save(); // TODO: Promises
+    this.promises.push(this.train.save());
+    Promise.all(this.promises);
   }
 
   parseTrainHeader() {
@@ -109,17 +111,18 @@ module.exports = class TrainParser {
       departure: { scheduled: m, actual: m }
     };
 
+    let self = this;
     $("table.vt tr")
       .filter((i, tr) => (typeof $(tr).attr("class") !== "undefined") && (typeof $(tr).attr("id") === "undefined"))
       .each((i, tr) => {
         let currentTrainStation = this.parseTrainStation($(tr), lastMoments);
         const trainStationLink = TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, currentTrainStation);
-        trainStationLink.save(); // TODO: Promises
+        self.promises.push(trainStationLink.save());
         lastTrainStation = currentTrainStation;
       });
 
     const trainStationLink = TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, null);
-    trainStationLink.save(); // TODO: Promises
+    this.promises.push(trainStationLink.save());
   }
 
   parseTrainStation(tr, lastMoments) {
@@ -166,7 +169,7 @@ module.exports = class TrainParser {
     lastMoments.departure.actual = departure && (departure.actual || departure.scheduled);
 
     trainStation.setInfo({ intDistance, platform, arrival, departure });
-    trainStation.save(); // TODO: Promises
+    this.promises.push(trainStation.save()); // TODO: Promises
     return name;
   }
 };

@@ -7,11 +7,13 @@ const { momentCombine, fixDateOrder } = require("../utils/timeUtils");
 module.exports = class StationParser {
   constructor(apiRes) {
     this.ch = cheerio.load(apiRes.d.result, { decodeEntities: true });
+    this.promises = [];
   }
 
   run() {
     this.parseStationHeader();
     this.parseStationTrains();
+    return Promise.all(this.promises);
   }
 
   parseStationHeader() {
@@ -79,18 +81,17 @@ module.exports = class StationParser {
 
     if (fromRel) {
       const fromTS = TrainStation.findOrCreate(trainNumber, fromRel[1]);
-      fromTS.save(); // TODO: Promises
+      this.promises.push(fromTS.save());
     }
 
     if (toRel) {
-      const fromTS = TrainStation.findOrCreate(trainNumber, toRel[0]);
-      toTS.save(); // TODO: Promises
+      const toTS = TrainStation.findOrCreate(trainNumber, toRel[0]);
+      this.promises.push(toTS.save());
     }
 
     train.setRelation(fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name);
 
-    // TODO: Promises
-    train.save();
-    trainStation.save();
+    this.promises.push(train.save());
+    this.promises.push(trainStation.save());
   }
 };
