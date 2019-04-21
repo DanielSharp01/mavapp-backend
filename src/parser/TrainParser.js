@@ -1,9 +1,10 @@
-const { parseTimeTuple, fixJson } = require("../utils/parserUtils");
+const { parseTimeTuple, fixJson, splitElviraDateId } = require("../utils/parserUtils");
 
 const cheerio = require("cheerio");
 const moment = require("moment");
 const { momentCombine, fixDateOrder } = require("../utils/timeUtils");
 const { resolveRealDistance } = require("../resolveStation");
+const { Train, TrainStation, TrainStationLink } = require("../objectRepository");
 
 module.exports = class TrainParser {
   constructor(apiRes) {
@@ -20,24 +21,25 @@ module.exports = class TrainParser {
   }
 
   run() {
-    if (this.failed) return;
+    if (this.failed) return Promise.reject();
 
-    this.parseTrainHeader();
-    this.parseTrainStations();
-    this.parseTrainExpiry();
-    this.train.encodedPolyline = this.polyline;
-    this.promises.push(this.train.save());
-    Promise.all(this.promises);
+    return this.parseTrainHeader().then(() => {
+      this.parseTrainStations();
+      this.parseTrainExpiry();
+      this.train.encodedPolyline = this.polyline;
+      this.promises.push(this.train.save());
+      return Promise.all(this.promises);
+    });
   }
 
-  parseTrainHeader() {
+  async parseTrainHeader() {
     const $ = this.ch;
     const header = $("th.title").first();
     const contents = header.contents();
     const textNode = contents.eq(0).text();
     const words = textNode.split(" ").map(w => w.trim());
     this.trainNumber = parseInt(words[0]);
-    this.train = Train.findOrCreate(this.trainNumber);
+    this.train = await Train.findOrCreate(this.trainNumber);
 
     if (typeof this.reqParam.v !== "undefined") {
       this.train.elviraId = splitElviraDateId();
@@ -47,7 +49,7 @@ module.exports = class TrainParser {
     let name;
     let type = words[words.length - 1];
     if (contents.get(1).tagName === "br" || contents.get(1).tagName === "span") {
-      name = words.slice(1, -1).join(" ").trim();
+      name = words.slice(1, -1).join(" ").trim().replaceEmpty(null);
     } else {
       name = words.slice(1).join(" ").trim().replaceEmpty(null);
     }
@@ -81,6 +83,7 @@ module.exports = class TrainParser {
 
   parseTrainExpiry() {
     const $ = this.ch;
+    let self = this;
     let explicitExpiry = false;
     $("div#vt").children("ul").first().find("li").each((i, li) => {
       const a = $(li).children().eq(0);
@@ -89,16 +92,16 @@ module.exports = class TrainParser {
 
       if ($(li).attr("style")) {
         let expiry = a.text().split("-")[1];
-        train.expiry = expiry;
+        self.train.expiry = expiry;
         explicitExpiry = true;
       }
 
       let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-      this.train.setElviraDateId(elviraDateId);
+      self.train.setElviraDateId(elviraDateId);
     });
 
     if (!explicitExpiry) {
-      train.expiry = moment({ year: moment().year() + 1, month: 0, date: 1 });
+      self.train.expiry = moment({ year: moment().year() + 1, month: 0, date: 1 });
     }
   }
 
@@ -116,27 +119,27 @@ module.exports = class TrainParser {
       .filter((i, tr) => (typeof $(tr).attr("class") !== "undefined") && (typeof $(tr).attr("id") === "undefined"))
       .each((i, tr) => {
         let currentTrainStation = this.parseTrainStation($(tr), lastMoments);
-        const trainStationLink = TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, currentTrainStation);
-        self.promises.push(trainStationLink.save());
+        self.promises.push(TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, currentTrainStation)
+          .then(trainStationLink => {
+            return trainStationLink.save();
+          }));
         lastTrainStation = currentTrainStation;
       });
 
-    const trainStationLink = TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, null);
-    this.promises.push(trainStationLink.save());
+    self.promises.push(TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, null)
+      .then(trainStationLink => {
+        return trainStationLink.save();
+      }));
   }
 
   parseTrainStation(tr, lastMoments) {
     const tds = tr.children("td");
     let intDistance = parseInt(tds.eq(0).text());
+    if (isNaN(intDistance)) intDistance = -1;
     let name = tds.eq(1).text();
     let arrival = parseTimeTuple(tds.eq(2));
     let departure = parseTimeTuple(tds.eq(3));
     let platform = tds.eq(4).text().trim().replaceEmpty(null);
-
-    const trainStation = TrainStation.findOrCreate(this.trainNumber, name);
-    resolveRealDistance(this.polyline, name)
-      .then(res => trainStation.distance = res)
-      .catch(err => console.log(err));
 
     if (arrival) {
       arrival.scheduled = arrival.scheduled
@@ -168,8 +171,15 @@ module.exports = class TrainParser {
     lastMoments.departure.scheduled = departure && departure.scheduled;
     lastMoments.departure.actual = departure && (departure.actual || departure.scheduled);
 
-    trainStation.setInfo({ intDistance, platform, arrival, departure });
-    this.promises.push(trainStation.save()); // TODO: Promises
+    this.promises.push(Promise.all([
+      TrainStation.findOrCreate(this.trainNumber, name),
+      resolveRealDistance(this.polyline, name).then(d => d).catch(err => { if (intDistance != -1) console.log(err); })])
+      .then(([trainStation, dist]) => {
+        trainStation.distance = dist;
+        trainStation.setInfo({ intDistance, platform, arrival, departure });
+        return trainStation.save();
+      }));
+
     return name;
   }
 };

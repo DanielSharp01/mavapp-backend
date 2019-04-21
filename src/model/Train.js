@@ -22,14 +22,12 @@ TrainSchema.virtual("fullKnowledge").get(function () {
   return (typeof this.expiry !== "undefined") && !moment(this.expiry).isBefore(moment())
 });
 
-module.exports = db.model("Train", TrainSchema);
 
 TrainSchema.statics.findOrCreate = async function (number) {
-  const Train = module.exports;
-  let res = await Train.findOne({ number });
+  let res = await this.findOne({ number });
   if (res) return res;
 
-  res = new Train();
+  res = new this();
   res._id = mongoose.Types.ObjectId();
   res.number = number;
   return res;
@@ -37,8 +35,8 @@ TrainSchema.statics.findOrCreate = async function (number) {
 
 TrainSchema.methods.setHeader = function (type, date, { name, visz }) {
   this.type = type;
-  if (typeof this.name !== "undefined") this.name = name;
-  if (typeof this.visz !== "undefined") this.visz = visz;
+  if (name) this.name = name;
+  if (visz) this.visz = visz;
 }
 
 TrainSchema.methods.setRelation = function (from, to) {
@@ -48,3 +46,5 @@ TrainSchema.methods.setRelation = function (from, to) {
 TrainSchema.methods.setElviraDateId = function (elviraDateId) {
   this.elviraId = splitElviraDateId(elviraDateId).elviraId;
 }
+
+module.exports = db.model("Train", TrainSchema);

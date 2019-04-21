@@ -62,36 +62,38 @@ module.exports = class StationParser {
     fixDateOrder(arrival && arrival.scheduled, departure && departure.scheduled);
     fixDateOrder(arrival && arrival.actual, departure && departure.actual);
 
-    const train = Train.findOrCreate(trainNumber);
-    const trainStation = TrainStation.findOrCreate(trainNumber, normalizeStationName(this.name));
-    trainStation.setInfo({ arrival, departure, platform });
+    let self = this;
+    self.promises.push(Train.findOrCreate(trainNumber).then(train => {
+      let onclick = trainA.attr("onclick");
+      let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
+      train.setElviraDateId(elviraDateId);
 
-    let onclick = trainA.attr("onclick");
-    let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-    train.setElviraDateId(elviraDateId);
+      let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
+      let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
+      let type = nameTypeSpl[nameTypeSpl.length - 1].trim();
+      train.setHeader(type, this.date, { name });
 
-    let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
-    let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
-    let type = nameTypeSpl[nameTypeSpl.length - 1].trim();
-    train.setHeader(type, this.date, { name });
+      let relSpl = trainTdC.eq(3).text().split(" -- ").map(s => s.trim().replaceEmpty());
+      let fromRel = relSpl[0] && relSpl[0].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
+      let toRel = relSpl[1] && relSpl[1].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
 
-    let relSpl = trainTdC.eq(3).text().split(" -- ").map(s => s.trim().replaceEmpty());
-    let fromRel = relSpl[0] && relSpl[0].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
-    let toRel = relSpl[1] && relSpl[1].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
+      let inPromises = [];
+      if (fromRel) {
+        inPromises.push(TrainStation.findOrCreate(trainNumber, fromRel[1]).then(ts => ts.save()));
+      }
 
-    if (fromRel) {
-      const fromTS = TrainStation.findOrCreate(trainNumber, fromRel[1]);
-      this.promises.push(fromTS.save());
-    }
+      if (toRel) {
+        inPromises.push(TrainStation.findOrCreate(trainNumber, toRel[0]).then(ts => ts.save()));
+      }
 
-    if (toRel) {
-      const toTS = TrainStation.findOrCreate(trainNumber, toRel[0]);
-      this.promises.push(toTS.save());
-    }
+      train.setRelation(fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name);
+      inPromises.push(trainStation.save());
 
-    train.setRelation(fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name);
-
-    this.promises.push(train.save());
-    this.promises.push(trainStation.save());
+      return Promise.all(inPromises);
+    }));
+    self.promises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(this.name)).then((ts) => {
+      trainStation.setInfo({ arrival, departure, platform });
+      return train.save();
+    }));
   }
 };

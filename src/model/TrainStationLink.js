@@ -1,5 +1,6 @@
 const db = require("./db");
-const Schema = require("mongoose").Schema;
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
 const TrainStationLinkSchema = new Schema({
   trainNumber: { type: Number, required: true },
@@ -10,13 +11,10 @@ const TrainStationLinkSchema = new Schema({
 TrainStationLinkSchema.virtual("fromStation", { ref: "Station", localField: "fromNormName", foreignField: "normName", justOne: true });
 TrainStationLinkSchema.virtual("toStation", { ref: "Station", localField: "toNormName", foreignField: "normName", justOne: true });
 
-module.exports = db.model("TrainStationLink", TrainStationLinkSchema);
-
 TrainStationLinkSchema.statics.findOrCreate = async function (trainNumber, fromNormName, toNormName) {
-  const TrainStationLink = module.exports;
-  res = new TrainStationLink();
-  let res = await TrainStationLink.findOne({ trainNumber, fromNormName, toNormName });
+  let res = await this.findOne({ trainNumber, fromNormName, toNormName });
   if (res) return res;
+  res = new this();
 
   res._id = mongoose.Types.ObjectId();
   res.trainNumber = trainNumber;
@@ -24,3 +22,5 @@ TrainStationLinkSchema.statics.findOrCreate = async function (trainNumber, fromN
   res.toNormName = toNormName;
   return res;
 }
+
+module.exports = db.model("TrainStationLink", TrainStationLinkSchema);

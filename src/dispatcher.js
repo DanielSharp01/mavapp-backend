@@ -25,33 +25,33 @@ function requestTrain(number) {
   return new Promise(async (resolve, reject) => {
     try {
       const train = await objectRepository.Train.findOne({ number });
-      if (!train || !train.fullKnowledge) {
-        return resolve(await TRAIN({ number }).then(apiRes => {
-          let parser = new TrainParser(apiRes);
-          return parser.run();
-        }).then(res => objectRepository.Train.findOne({ number })));
-      }
+      //if (!train || !train.fullKnowledge) {
+      return resolve(await TRAIN({ number }).then(apiRes => {
+        let parser = new TrainParser(apiRes);
+        return parser.run();
+      }).then(res => objectRepository.Train.findOne({ number })));
+      /*}
       else {
         return resolve(train);
-      }
+      }*/
     }
     catch (err) { reject(err); }
   });
 }
 
-function requestTrainElviraId(elviraId) {
+function requestTrainElviraId(elviraId, elviraDateId) {
   return new Promise(async (resolve, reject) => {
     try {
       const train = await objectRepository.Train.findOne({ elviraId });
-      if (!train || !train.fullKnowledge) {
-        return resolve(await TRAIN({ elviraDateId }).then(apiRes => {
-          let parser = new TrainParser(apiRes);
-          return parser.run();
-        }).then(res => objectRepository.Train.findOne({ elviraId })));
-      }
+      //if (!train || !train.fullKnowledge) {
+      return resolve(await TRAIN({ elviraDateId }).then(apiRes => {
+        let parser = new TrainParser(apiRes);
+        return parser.run();
+      }).then(res => objectRepository.Train.findOne({ elviraId })));
+      /*}
       else {
         return resolve(train);
-      }
+      }*/
     }
     catch (err) { reject(err); }
   });

@@ -1,5 +1,6 @@
 const db = require("./db");
-const Schema = require("mongoose").Schema;
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
 const TrainStationSchema = new Schema({
   trainNumber: { type: Number, required: true },
@@ -15,14 +16,11 @@ TrainStationSchema.index({ trainNumber: 1, normName: 1 }, { unique: true });
 TrainStationSchema.virtual("station", { ref: "Station", localField: "normName", foreignField: "normName", justOne: true });
 TrainStationSchema.virtual("train", { ref: "Train", localField: "trainNumber", foreignField: "number", justOne: true });
 
-module.exports = db.model("TrainStation", TrainStationSchema);
-
 TrainStationSchema.statics.findOrCreate = async function (trainNumber, normName) {
-  const TrainStation = module.exports;
-  let res = await TrainStation.findOne({ trainNumber, normName });
+  let res = await this.findOne({ trainNumber, normName });
   if (res) return res;
 
-  res = new TrainStation();
+  res = new this();
   res._id = mongoose.Types.ObjectId();
   res.trainNumber = trainNumber;
   res.normName = normName;
@@ -35,3 +33,5 @@ TrainStationSchema.methods.setInfo = function ({ intDistance, platform, arrival,
   if (arrival && arrival.scheduled) this.arrival = arrival.scheduled;
   if (departure && departure.scheduled) this.departure = departure.scheduled;
 }
+
+module.exports = db.model("TrainStation", TrainStationSchema);
