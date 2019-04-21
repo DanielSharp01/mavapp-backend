@@ -1,6 +1,6 @@
 module.exports = () => {
   return async (req, res, next) => {
-    let response = res.trainInstances.map(instance => {
+    res.result = res.trainInstances.map(instance => {
       return {
         number: instance.train.number,
         elviraId: instance.elviraId,
@@ -13,7 +13,6 @@ module.exports = () => {
         delay: instance.delay
       };
     });
-
-    res.send(response);
+    return next();
   }
 }

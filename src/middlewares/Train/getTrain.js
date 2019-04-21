@@ -5,7 +5,7 @@ module.exports = (objectRepository, dispatcher) => {
   return async (req, res, next) => {
     try {
       if (req.params.number) res.train = await dispatcher.requestTrain(req.params.number);
-      if (req.params.elviraId) {
+      else if (req.params.elviraId) {
         if (req.params.elviraId.includes("_"))
           req.elviraId = splitElviraDateId(req.params.elviraId);
         else {
@@ -17,6 +17,7 @@ module.exports = (objectRepository, dispatcher) => {
         }
         res.train = await dispatcher.requestTrainElviraId(req.elviraId);
       }
+      else return next("Invalid parameters.");
     }
     catch (err) {
       return next(err);

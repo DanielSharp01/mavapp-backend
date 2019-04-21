@@ -1,9 +1,7 @@
 module.exports = (objectRepository) => {
   return async (req, res, next) => {
     try {
-      let stations = await objectRepository.TrainStation.find({ trainNumber: res.train.number }).populate({
-        path: "station"
-      });
+      let stations = await objectRepository.TrainStation.find({ trainNumber: res.train.number }).populate("station");
       let stationLinks = await objectRepository.TrainStationLink.find({ trainNumber: res.train.number });
       stations = stations.reduce((map, st) => {
         map[st.normName] = st;

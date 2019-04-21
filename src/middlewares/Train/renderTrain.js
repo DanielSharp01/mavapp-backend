@@ -1,14 +1,15 @@
 module.exports = () => {
-  return async (req, res, next) => {
+  return (req, res, next) => {
     let stations = res.stations.map(station => {
       return {
         name: station.mavName || (station.station && station.station.displayName),
-        distance: station.distance,
+        normName: station.normName,
+        distance: station.distance || null,
         intDistance: station.intDistance !== -1 ? station.intDistance : null,
         platform: station.platform,
-        position: station.station ? station.station.position : undefined,
-        arrival: station.arrival,
-        departure: station.departure
+        position: station.station ? station.station.position : null,
+        arrival: station.arrival || null,
+        departure: station.departure || null
       };
     });
 
@@ -19,7 +20,7 @@ module.exports = () => {
       delay: res.instance.delay
     } : null;
 
-    let response = {
+    res.result = {
       number: res.train.number,
       elviraId: res.train.elviraId,
       type: res.train.type,
@@ -29,9 +30,9 @@ module.exports = () => {
       stations,
     }
 
-    if (req.params.elviraId && req.params.elviraId.includes("_")) response.instance = instance;
-    else response.instanceToday = instance;
+    if (req.params.elviraId && req.params.elviraId.includes("_")) res.result.instance = instance;
+    else res.result.instanceToday = instance;
 
-    res.send(response);
+    return next();
   }
 }

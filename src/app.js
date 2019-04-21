@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const objectRepository = require("./objectRepository");
 const dispatcher = new (require("./dispatcher")(objectRepository))();
+const statusCodeMW = require("./middlewares/commons/statusCode");
 
 require("./model/stationSeed")();
 
@@ -17,6 +18,8 @@ app.get((req, res, next) => {
 
 require("./routes/Train")(app, objectRepository, dispatcher);
 require("./routes/Trains")(app, objectRepository);
+require("./routes/Station")(app, objectRepository, dispatcher);
+require("./routes/Route")(app, objectRepository);
 
 /*
 app.get("/station/:name", (req, res, next) => {
@@ -39,7 +42,10 @@ app.get("/trains/stop", (req, res, next) => {
 app.use((err, req, res, next) => {
   if (err.stack) console.error(err.stack);
   else console.error(err);
-  res.status(500).send({ error: err });
+
+  res.statusCode = 500;
+  res.result = { error: err };
+  statusCodeMW()(req, res, next);
 });
 
 module.exports = app;
