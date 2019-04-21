@@ -85,9 +85,17 @@ module.exports = (objectRepository) => {
     }
 
     async requestTrains() {
-      Promise.all([TRAINS(), TrainInstance.updateMany({ status: "running" }, { status: "stopped" })]).then(([apiRes]) => {
+      let idMap = {};
+      return Promise.all([TRAINS(), TrainInstance.find({ status: "running" }).then(res => res.reduce((map, ti) => {
+        map[ti._id] = ti;
+        return map;
+      }, idMap))]).then(([apiRes]) => {
         let parser = new TrainsParser(apiRes);
-        return parser.run();
+        return parser.run(idMap);
+      }).then(() => {
+        let ids = Object.keys(idMap);
+        if (ids.length > 0) return TrainInstance.updateMany({ _id: { $in: ids } }, { $set: { status: "stopped" } });
+        else return Promise.resolve();
       });
     }
   }

@@ -7,7 +7,7 @@ module.exports = class TrainParser {
     this.promises = [];
   }
 
-  run() {
+  run(runningMap) {
     let self = this;
     this.trains.forEach(train => {
       const trainNumber = parseInt(train["@TrainNumber"].slice(2));
@@ -27,6 +27,7 @@ module.exports = class TrainParser {
         trainInstance.position = { latitude: train["@Lat"], longitude: train["@Lon"] };
         trainInstance.delay = train["@Delay"];
         trainInstance.status = "running";
+        delete runningMap[trainInstance._id];
         return trainInstance.save();
       }));
     });
