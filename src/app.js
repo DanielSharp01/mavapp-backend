@@ -50,8 +50,8 @@ app.get("/trains/stop", (req, res, next) => {
 
 app.use((err, req, res, next) => {
   if (err.stack) console.error(err.stack);
-  else console.err(err);
-  res.status(500).send("ERROR");
+  else console.error(err);
+  res.status(500).send(err);
 });
 
 module.exports = app;

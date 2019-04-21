@@ -3,6 +3,7 @@ const { normalizeStationName } = require("../utils/parserUtils");
 const cheerio = require("cheerio");
 const moment = require("moment");
 const { momentCombine, fixDateOrder } = require("../utils/timeUtils");
+const { Train, TrainStation } = require("../objectRepository");
 
 module.exports = class StationParser {
   constructor(apiRes) {
@@ -87,13 +88,14 @@ module.exports = class StationParser {
       }
 
       train.setRelation(fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name);
-      inPromises.push(trainStation.save());
+      inPromises.push(train.save());
 
       return Promise.all(inPromises);
     }));
-    self.promises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(this.name)).then((ts) => {
-      trainStation.setInfo({ arrival, departure, platform });
-      return train.save();
-    }));
+    self.promises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(this.name))
+      .then((trainStation) => {
+        trainStation.setInfo({ arrival, departure, platform });
+        return trainStation.save();
+      }));
   }
 };

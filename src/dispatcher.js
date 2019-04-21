@@ -2,7 +2,7 @@ const { TRAIN, STATION, TRAINS } = require("./apis/mavapis");
 const TrainParser = require("./parser/TrainParser");
 const StationParser = require("./parser/StationParser");
 const TrainsParser = require("./parser/TrainsParser");
-const objectRepository = require("./objectRepository");
+const { Train, Station, TrainInstance } = require("./objectRepository");
 const { normalizeStationName } = require("./utils/parserUtils");
 const moment = require("moment");
 
@@ -24,16 +24,16 @@ function stopTrainsObserver() {
 function requestTrain(number) {
   return new Promise(async (resolve, reject) => {
     try {
-      const train = await objectRepository.Train.findOne({ number });
-      //if (!train || !train.fullKnowledge) {
-      return resolve(await TRAIN({ number }).then(apiRes => {
-        let parser = new TrainParser(apiRes);
-        return parser.run();
-      }).then(res => objectRepository.Train.findOne({ number })));
-      /*}
+      const train = await Train.findOne({ number });
+      if (!train || !train.fullKnowledge) {
+        return resolve(await TRAIN({ number }).then(apiRes => {
+          let parser = new TrainParser(apiRes);
+          return parser.run();
+        }).then(res => Train.findOne({ number })));
+      }
       else {
         return resolve(train);
-      }*/
+      }
     }
     catch (err) { reject(err); }
   });
@@ -42,16 +42,16 @@ function requestTrain(number) {
 function requestTrainElviraId(elviraId, elviraDateId) {
   return new Promise(async (resolve, reject) => {
     try {
-      const train = await objectRepository.Train.findOne({ elviraId });
-      //if (!train || !train.fullKnowledge) {
-      return resolve(await TRAIN({ elviraDateId }).then(apiRes => {
-        let parser = new TrainParser(apiRes);
-        return parser.run();
-      }).then(res => objectRepository.Train.findOne({ elviraId })));
-      /*}
+      const train = await Train.findOne({ elviraId });
+      if (!train || !train.fullKnowledge) {
+        return resolve(await TRAIN({ elviraDateId }).then(apiRes => {
+          let parser = new TrainParser(apiRes);
+          return parser.run();
+        }).then(res => Train.findOne({ elviraId })));
+      }
       else {
         return resolve(train);
-      }*/
+      }
     }
     catch (err) { reject(err); }
   });
@@ -61,13 +61,14 @@ function requestStation(stationName) {
   const normName = normalizeStationName(stationName);
   return new Promise(async (resolve, reject) => {
     try {
-      const station = await objectRepository.Station.findOne({ normName });
+      const station = await Station.findOne({ normName });
       if (!station || !station.fullKnowledge) {
         return resolve(await STATION(stationName).then(apiRes => {
           let parser = new StationParser(apiRes);
           return parser.run();
         }).then(async res => {
-          let station = await objectRepository.Station.findOne({ normName })
+          let station = await Station.findOne({ normName })
+          if (!station) return reject(`Station '${stationName}' does not exist!`);
           let now = moment();
           station.expiry = moment({ year: now.year(), month: now.month(), date: now.date() + 1 });
           station.save();
@@ -83,7 +84,7 @@ function requestStation(stationName) {
 }
 
 async function requestTrains() {
-  TRAINS().then(apiRes => {
+  Promise.all([TRAINS(), TrainInstance.updateMany({ status: "running" }, { status: "stopped" })]).then(([apiRes]) => {
     let parser = new TrainsParser(apiRes);
     return parser.run();
   });

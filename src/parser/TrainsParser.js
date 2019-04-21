@@ -26,6 +26,7 @@ module.exports = class TrainParser {
       self.promises.push(TrainInstance.findOrCreate(elviraDateId.elviraId, elviraDateId.date).then(trainInstance => {
         trainInstance.position = { latitude: train["@Lat"], longitude: train["@Lon"] };
         trainInstance.delay = train["@Delay"];
+        trainInstance.status = "running";
         return trainInstance.save();
       }));
     });
