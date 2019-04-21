@@ -14,10 +14,21 @@ function requestMAV(payload) {
   });
 }
 
-module.exports.TRAIN = ({ number, elviraDateId }) => requestMAV({
-  a: "TRAIN",
-  jo: { vsz: number ? ("55" + number) : undefined, v: elviraDateId }
-});
+function doubleDigit(num) {
+  num %= 100;
+  if (num < 10) return "0" + num;
+  else return num;
+}
+
+module.exports.TRAIN = ({ number, elviraDateId }) => {
+  if (elviraDateId) elviraDateId = `${elviraDateId.elviraId}_${doubleDigit(elviraDateId.date.year())}${doubleDigit(elviraDateId.date.month() + 1)}${doubleDigit(elviraDateId.date.date())}`;
+  else elviraDateId = undefined;
+
+  return requestMAV({
+    a: "TRAIN",
+    jo: { vsz: number ? ("55" + number) : undefined, v: elviraDateId }
+  });
+}
 
 module.exports.STATION = (name) => requestMAV({
   a: "STATION",

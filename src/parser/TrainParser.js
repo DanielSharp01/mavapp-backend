@@ -1,4 +1,4 @@
-const { parseTimeTuple, fixJson, splitElviraDateId } = require("../utils/parserUtils");
+const { parseTimeTuple, fixJson, normalizeStationName } = require("../utils/parserUtils");
 
 const cheerio = require("cheerio");
 const moment = require("moment");
@@ -10,7 +10,7 @@ module.exports = class TrainParser {
   constructor(apiRes) {
     this.reqParam = apiRes.d.param;
 
-    if (apiRes.d.result.line.length === 0) {
+    if (!apiRes.d.result || !apiRes.d.result.line || apiRes.d.result.line.length === 0) {
       this.failed = true;
       return;
     }
@@ -21,7 +21,7 @@ module.exports = class TrainParser {
   }
 
   run() {
-    if (this.failed) return Promise.reject();
+    if (this.failed) return Promise.reject("Request failed!");
 
     return this.parseTrainHeader().then(() => {
       this.parseTrainStations();
@@ -42,7 +42,6 @@ module.exports = class TrainParser {
     this.train = await Train.findOrCreate(this.trainNumber);
 
     if (typeof this.reqParam.v !== "undefined") {
-      this.train.elviraId = splitElviraDateId();
       this.train.setElviraDateId(this.reqParam.v);
     }
 
@@ -119,14 +118,16 @@ module.exports = class TrainParser {
       .filter((i, tr) => (typeof $(tr).attr("class") !== "undefined") && (typeof $(tr).attr("id") === "undefined"))
       .each((i, tr) => {
         let currentTrainStation = this.parseTrainStation($(tr), lastMoments);
-        self.promises.push(TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, currentTrainStation)
+        self.promises.push(TrainStationLink.findOrCreate(this.trainNumber,
+          lastTrainStation && normalizeStationName(lastTrainStation),
+          normalizeStationName(currentTrainStation))
           .then(trainStationLink => {
             return trainStationLink.save();
           }));
         lastTrainStation = currentTrainStation;
       });
 
-    self.promises.push(TrainStationLink.findOrCreate(this.trainNumber, lastTrainStation, null)
+    self.promises.push(TrainStationLink.findOrCreate(this.trainNumber, normalizeStationName(lastTrainStation), null)
       .then(trainStationLink => {
         return trainStationLink.save();
       }));
@@ -172,11 +173,11 @@ module.exports = class TrainParser {
     lastMoments.departure.actual = departure && (departure.actual || departure.scheduled);
 
     this.promises.push(Promise.all([
-      TrainStation.findOrCreate(this.trainNumber, name),
+      TrainStation.findOrCreate(this.trainNumber, normalizeStationName(name)),
       resolveRealDistance(this.polyline, name).then(d => d).catch(err => { if (intDistance != -1) console.log(err); })])
       .then(([trainStation, dist]) => {
         trainStation.distance = dist;
-        trainStation.setInfo({ intDistance, platform, arrival, departure });
+        trainStation.setInfo({ mavName: name, intDistance, platform, arrival, departure });
         return trainStation.save();
       }));
 

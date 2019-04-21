@@ -10,8 +10,8 @@ function normalizeStationName(name) {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "")
     .replace("railway station crossing", "").replace("railway station", "").replace("train station", "")
     .replace("vonatallomas", "").replace("vasutallomas", "").replace("pu", "").replace("mav pu", "")
-    .replace("vm").replace("palyaudvar")
-    .replace("-", " ").replace(".", "").replace("/\s\s+/g", " ").trim();
+    .replace("vm", "").replace("palyaudvar", "")
+    .replace("-", " ").replace(".", "").replace("/\s\s+/g", " ").replace("/\[.?\]/g", " ").trim();
 }
 
 function parseTimeTuple(elem) {

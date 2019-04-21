@@ -9,17 +9,17 @@ Node.js backend that transforms the Hungarian Railway Company (MÁV)'s data into
 
 # API endpoints
 
-## /train/number/:number or /train/elviraid/:elviraid
+## /train/number/:number or /train/elviraId/:elviraId
 
-Returns a single train by number or elviraid.
+Returns a single train by number or elviraId.
 
 ### Parameters
 
 `:number` - Number of the train. This number is publically known.
 
-`:elviraid` - Elvira Id of the train. These are slightly longer numbers identifying a train in MAV databases.
+`:elviraId` - Elvira Id of the train. These are slightly longer numbers identifying a train in MAV databases.
 
-### Reponse
+### Response
 
 Train stations are in order from-to.
 
@@ -83,7 +83,7 @@ Returns a single station by name.
 
 `:name` - Will be normalized, which roughly means all accented characters will be replaced by their non accented counterpart and redundant information such as "train station", "railway station" will be removed. Will also be converted to lowercase.
 
-### Reponse
+### Response
 
 `norm-name` is the normalized (unaccented, lowered etc.) name.
 
@@ -157,7 +157,7 @@ Both names will still be normalized, which roughly means all accented characters
 
 `:toname` - trains will show up that go to here
 
-### Reponse
+### Response
 
 `norm-name` is the normalized (unaccented, lowered etc.) name.
 
@@ -292,7 +292,7 @@ Returns a single train instance identified with its elviradateid.
 
 ### Parameters
 
-`:elviradateid` - `:elviraid`_`date in YYMMDD` format.  
+`:elviradateid` - `:elviraId`_`date in YYMMDD` format.  
 Example: Train with id `5609125` @ 2019 March 16 would become `5609125_190316`.
 
 ### Response
@@ -354,7 +354,7 @@ I do not and will not distribute any database snapshots.
 
 This project uses [OpenStreetMap](https://www.openstreetmap.org) for train station positions.
 
-The code allows you to call the [Overpass API](http://overpass-api.de/) to fill your station database. This is automatic can be changed in the `./model/Station.js` file (remove the `seedWithData()` function call).
+The code allows you to call the [Overpass API](http://overpass-api.de/) to fill your station database. This is automatic can be changed in the `./src/app.js` file (remove the `require("./model/stationSeed")();` function call).
 
 I'm not distributing any OpenStreetMap data, but the backend will, once put in production. Please note that you have to make the station database queryable in some way if you wish to comply with the OpenStreetMap license.
 

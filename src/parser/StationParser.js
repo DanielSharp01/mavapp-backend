@@ -80,11 +80,11 @@ module.exports = class StationParser {
 
       let inPromises = [];
       if (fromRel) {
-        inPromises.push(TrainStation.findOrCreate(trainNumber, fromRel[1]).then(ts => ts.save()));
+        inPromises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(fromRel[1])).then(ts => ts.save()));
       }
 
       if (toRel) {
-        inPromises.push(TrainStation.findOrCreate(trainNumber, toRel[0]).then(ts => ts.save()));
+        inPromises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(toRel[0])).then(ts => ts.save()));
       }
 
       train.setRelation(fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name);
@@ -94,7 +94,7 @@ module.exports = class StationParser {
     }));
     self.promises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(this.name))
       .then((trainStation) => {
-        trainStation.setInfo({ arrival, departure, platform });
+        trainStation.setInfo({ mavName: this.name, arrival, departure, platform });
         return trainStation.save();
       }));
   }

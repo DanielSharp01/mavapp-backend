@@ -1,5 +1,5 @@
 const { Train, TrainStation, TrainInstance } = require("../objectRepository");
-const { splitElviraDateId } = require("../utils/parserUtils");
+const { splitElviraDateId, normalizeStationName } = require("../utils/parserUtils");
 
 module.exports = class TrainParser {
   constructor(apiRes) {
@@ -17,8 +17,8 @@ module.exports = class TrainParser {
         trainObj.setRelation(relSpl[0], relSpl[1]);
 
         let inPromises = [];
-        inPromises.push(TrainStation.findOrCreate(trainNumber, relSpl[0]).then(ts => self.promises.push(ts.save())));
-        inPromises.push(TrainStation.findOrCreate(trainNumber, relSpl[1]).then(ts => self.promises.push(ts.save())));
+        inPromises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(relSpl[0])).then(ts => self.promises.push(ts.save())));
+        inPromises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(relSpl[1])).then(ts => self.promises.push(ts.save())));
         inPromises.push(trainObj.save());
         return Promise.all(inPromises);
       }));

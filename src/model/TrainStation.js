@@ -5,6 +5,7 @@ const Schema = mongoose.Schema;
 const TrainStationSchema = new Schema({
   trainNumber: { type: Number, required: true },
   normName: { type: String, required: true },
+  mavName: { type: String },
   intDistance: Number,
   distance: Number,
   platform: String,
@@ -27,7 +28,8 @@ TrainStationSchema.statics.findOrCreate = async function (trainNumber, normName)
   return res;
 }
 
-TrainStationSchema.methods.setInfo = function ({ intDistance, platform, arrival, departure }) {
+TrainStationSchema.methods.setInfo = function ({ mavName, intDistance, platform, arrival, departure }) {
+  this.mavName = mavName;
   if (typeof intDistance !== "undefined") this.intDistance = intDistance;
   if (typeof platform !== "undefined") this.platform = platform;
   if (arrival && arrival.scheduled) this.arrival = arrival.scheduled;
