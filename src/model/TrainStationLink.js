@@ -10,6 +10,7 @@ const TrainStationLinkSchema = new Schema({
 
 TrainStationLinkSchema.virtual("fromStation", { ref: "Station", localField: "fromNormName", foreignField: "normName", justOne: true });
 TrainStationLinkSchema.virtual("toStation", { ref: "Station", localField: "toNormName", foreignField: "normName", justOne: true });
+TrainStationLinkSchema.virtual("train", { ref: "Train", localField: "trainNumber", foreignField: "number", justOne: true });
 
 TrainStationLinkSchema.statics.findOrCreate = async function (trainNumber, fromNormName, toNormName) {
   let res = await this.findOne({ trainNumber, fromNormName, toNormName });
