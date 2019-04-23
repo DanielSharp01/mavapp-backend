@@ -1,5 +1,6 @@
 const db = require("./db");
-const Schema = require("mongoose").Schema;
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
 const IndirectRouteSchema = new Schema({
   fromNormName: { type: String, required: true },

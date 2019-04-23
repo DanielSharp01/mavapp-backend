@@ -2,12 +2,15 @@ const express = require("express");
 const app = express();
 const objectRepository = require("./objectRepository");
 const dispatcher = new (require("./dispatcher")(objectRepository))();
+const { ROUTE } = require("./apis/mavapis");
+const RouteParser = require("./parser/RouteParser");
 const statusCodeMW = require("./middlewares/commons/statusCode");
+const moment = require("moment");
 
-require("./model/stationSeed")();
+// require("./model/stationSeed")();
 
-dispatcher.startTrainsObserver();
-console.log("Started trains observer");
+// dispatcher.startTrainsObserver();
+// console.log("Started trains observer");
 
 app.use(express.static("./public"));
 
@@ -37,6 +40,15 @@ app.get("/trains/start", (req, res, next) => {
 app.get("/trains/stop", (req, res, next) => {
   dispatcher.stopTrainsObserver();
   res.send({ status: "stopped trains observer" });
+});
+
+app.get("/test/:from/:to", (req, res, next) => {
+  res.header("Content-Type", "text/html");
+  ROUTE(req.params.from, req.params.to, { via: req.query.via, date: moment() }).then(apiRes => {
+    let parser = new RouteParser(apiRes);
+    let html = parser.run();
+    res.send(html);
+  });
 });
 
 app.use((err, req, res, next) => {

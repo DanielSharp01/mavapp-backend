@@ -39,3 +39,8 @@ module.exports.TRAINS = () => requestMAV({
   a: "TRAINS",
   jo: { pre: true, history: false, id: false }
 });
+
+module.exports.ROUTE = (from, to, { via, date }) => requestMAV({
+  a: "ROUTE",
+  jo: { i: from, e: to, v: via, d: date.format("YYYY.MM.DD") }
+});

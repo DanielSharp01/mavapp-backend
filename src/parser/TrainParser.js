@@ -149,6 +149,7 @@ module.exports = class TrainParser {
         && momentCombine(lastMoments.departure.scheduled || lastMoments.departure.actual,
           moment(arrival.actual, "HH:mm"));
     }
+
     if (departure) {
       departure.scheduled = departure && departure.scheduled
         && momentCombine(lastMoments.departure.scheduled, moment(departure.scheduled, "HH:mm"));
@@ -177,7 +178,7 @@ module.exports = class TrainParser {
       resolveRealDistance(this.polyline, name).then(d => d).catch(err => { if (intDistance != -1) console.log(err); })])
       .then(([trainStation, dist]) => {
         trainStation.distance = dist;
-        trainStation.setInfo({ mavName: name, intDistance, platform, arrival, departure });
+        trainStation.setInfo({ mavName: name, intDistance, platform, arrival: arrival || null, departure: departure || null });
         return trainStation.save();
       }));
 
