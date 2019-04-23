@@ -17,66 +17,85 @@ module.exports = class RouteParser {
     this.promises = [];
   }
 
+
+  // TODO: Indirect Routes
   run() {
     const $ = this.ch;
-    // if (this.failed) return Promise.reject("Request failed!");
-    if (this.failed) return "<b>Request failed.</b>";
+    if (this.failed) return Promise.reject("Request failed!");
+    this.date = moment($("div.rtftop").children().eq(1).text().split(",")[0].trim(), "YYYY.MM.DD");
+
+    let trainsAdded = {};
+    let trainStationsAdded = {};
+
     const self = this;
-    $("div#timetable").find("table").filter((i, tr) => $(tr).attr("id") && $(tr).attr("id").includes("info"))
-      .each((i, subtable) => {
-        let lastStationName = null;
-        let trainNumber;
-        // TODO: Indirect Routes
-        $(subtable).find("tr").filter((i, tr) => typeof $(tr).attr("class") !== "undefined")
-          .each((i, tr) => {
-            const tds = $(tr).children("td");
-            let stationName = tds.eq(0).text().replace("+>>", "").trim();
-            let time = parseTimeTuple(tds.eq(1));
-            let platform = (tds.length == 4) ? tds.eq(2).text().trim().replaceEmpty(null) : null;
-            let trainTd = (tds.length == 4) ? tds.eq(3) : tds.eq(2);
-            let trainTdC = trainTd.contents();
-            let trainA = trainTdC.eq(0).first();
-            let newTrainNumber = parseInt(trainA.text());
-            if (isNaN(newTrainNumber)) newTrainNumber = null;
+    let subtables = $("div#timetable").find("table").filter((i, tr) => $(tr).attr("id") && $(tr).attr("id").includes("info"));
+    if (subtables.length === 0) return Promise.reject("Request failed!");
+    subtables.each((i, subtable) => {
+      let lastStationName = null;
+      let trainNumber;
+      $(subtable).find("tr").filter((i, tr) => typeof $(tr).attr("class") !== "undefined")
+        .each((i, tr) => {
+          const tds = $(tr).children("td");
+          let stationName = tds.eq(0).text().replace("+>>", "").trim();
+          let time = parseTimeTuple(tds.eq(1));
+          let platform = (tds.length == 4) ? tds.eq(2).text().trim().replaceEmpty(null) : null;
+          let trainTd = (tds.length == 4) ? tds.eq(3) : tds.eq(2);
+          let trainTdC = trainTd.contents();
+          let trainA = trainTdC.eq(0).first();
+          let newTrainNumber = parseInt(trainA.text());
+          if (isNaN(newTrainNumber)) newTrainNumber = null;
 
-            if (!trainNumber) trainNumber = newTrainNumber;
-            if (!trainNumber) return false; // Break
+          if (!trainNumber) trainNumber = newTrainNumber;
+          if (!trainNumber) return false;
 
-            //self.promises.push(Train.findOrCreate(trainNumber).then(train => {
-            if (newTrainNumber) {
-              let onclick = trainA.attr("onclick");
-              let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
-              //train.setElviraDateId(elviraDateId);
-
-              let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
-              let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
-              let type = nameTypeSpl[nameTypeSpl.length - 1].trim();
-              //train.setHeader(type, this.date, { name });
-
-              // TODO: VISZ parse, rel is parsed not on eq(3) but depends on where the br is
-
-              let relSpl = trainTdC.eq(3).text().split(" - ").map(s => s.trim().replaceEmpty());
-              let fromRel = relSpl[0] && relSpl[0].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
-              let toRel = relSpl[1] && relSpl[1].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
-
-              console.log(`TRAIN #${trainNumber} ${name} ${type} ${fromRel || stationName} - ${toRel || stationName}`);
+          let relElement = (() => {
+            for (let i = 1; i < trainTdC.length; i++) {
+              if (trainTdC[i - 1].name === "br") return trainTdC[i];
             }
-            /*let inPromises = [];
-            if (fromRel) {
-              inPromises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(fromRel[1])).then(ts => ts.save()));
+          })();
+          let relSpl = $(relElement).text().slice(1, -1).split(String.fromCharCode(160) + "-" + String.fromCharCode(160)).map(s => s.trim().replaceEmpty());
+          let fromRel = relSpl[0] && relSpl[0].trim().replaceEmpty();
+          let toRel = relSpl[1] && relSpl[1].trim().replaceEmpty();
+
+          if (fromRel) {
+            let fromRelNName = normalizeStationName(fromRel);
+            if (!trainStationsAdded[trainNumber + "." + fromRelNName]) {
+              trainStationsAdded[trainNumber + "." + fromRelNName] = true;
+              self.promises.push(TrainStation.findOrCreate(trainNumber, fromRelNName).then(ts => ts.save()));
             }
+          }
 
-            if (toRel) {
-              inPromises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(toRel[0])).then(ts => ts.save()));
+          if (toRel) {
+            let toRelNName = normalizeStationName(toRel);
+            if (!trainStationsAdded[trainNumber + "." + toRelNName]) {
+              trainStationsAdded[trainNumber + "." + toRelNName] = true;
+              self.promises.push(TrainStation.findOrCreate(trainNumber, toRelNName).then(ts => ts.save()));
             }
+          }
 
-            train.setRelation(fromRel ? fromRel[1] : this.name, toRel ? toRel[0] : this.name);
-            inPromises.push(train.save());
+          if (!trainsAdded[trainNumber]) {
+            trainsAdded[trainNumber] = true;
+            self.promises.push(Train.findOrCreate(trainNumber).then(train => {
+              if (newTrainNumber) {
+                let onclick = trainA.attr("onclick");
+                let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
+                train.setElviraDateId(elviraDateId);
 
-            return Promise.all(inPromises);*/
-            //}));
+                let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
+                let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
+                let type = nameTypeSpl[nameTypeSpl.length - 1].trim();
+                let visz = trainTd.find("span.viszszam").eq(0).text().trim().replaceEmpty();
+                train.setHeader(type, this.date, { name, visz });
+                train.setRelation(fromRel ? fromRel : stationName, toRel ? toRel : stationName);
+                return train.save();
+              }
+            }));
+          }
 
-            /*self.promises.push(TrainStation.findOrCreate(trainNumber, normalizeStationName(stationName))
+          let nname = normalizeStationName(stationName);
+          if (!trainStationsAdded[trainNumber + "." + nname]) {
+            trainStationsAdded[trainNumber + "." + nname] = true;
+            self.promises.push(TrainStation.findOrCreate(trainNumber, nname)
               .then((trainStation) => {
                 trainStation.setInfo({
                   mavName: stationName,
@@ -85,21 +104,21 @@ module.exports = class RouteParser {
                   platform
                 });
                 return trainStation.save();
-              }));*/
+              }));
             if (lastStationName) {
-              // console.log(`DR between ${lastStationName} and ${stationName} with train #${trainNumber}`);
-              /*self.promises.push(DirectRoute.findOrCreate(
+              self.promises.push(DirectRoute.findOrCreate(
                 normalizeStationName(lastStationName),
                 normalizeStationName(stationName),
-                trainNumber));*/
+                trainNumber).then(dr => dr.save()));
               lastStationName = null;
               trainNumber = null;
             }
             else {
               lastStationName = stationName;
             }
-          });
-      });
+          }
+        });
+    });
 
     return Promise.all(this.promises);
   }

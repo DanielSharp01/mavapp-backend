@@ -72,7 +72,7 @@ module.exports = class StationParser {
       let nameTypeSpl = trainTdC.eq(1).text().trim().match(/\S+/g).map(s => s.trim());
       let name = nameTypeSpl.slice(0, -1).join(" ").trim().replaceEmpty();
       let type = nameTypeSpl[nameTypeSpl.length - 1].trim();
-      train.setHeader(type, this.date, { name });
+      train.setHeader(type, { name });
 
       let relSpl = trainTdC.eq(3).text().split(" -- ").map(s => s.trim().replaceEmpty());
       let fromRel = relSpl[0] && relSpl[0].split(String.fromCharCode(160)).map(s => s.trim().replaceEmpty());

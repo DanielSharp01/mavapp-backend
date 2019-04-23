@@ -44,10 +44,20 @@ app.get("/trains/stop", (req, res, next) => {
 
 app.get("/test/:from/:to", (req, res, next) => {
   res.header("Content-Type", "text/html");
-  ROUTE(req.params.from, req.params.to, { via: req.query.via, date: moment() }).then(apiRes => {
+  ROUTE(req.params.from, req.params.to, {}).then(async apiRes => {
     let parser = new RouteParser(apiRes);
-    let html = parser.run();
-    res.send(html);
+    try {
+      await parser.run();
+      res.result = {};
+      statusCodeMW()(req, res, next);
+    }
+    catch (err) {
+      res.statusCode = 500;
+      res.result = { error: err };
+      statusCodeMW()(req, res, next);
+      throw err;
+    }
+
   });
 });
 

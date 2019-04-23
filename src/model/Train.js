@@ -33,7 +33,7 @@ TrainSchema.statics.findOrCreate = async function (number) {
   return res;
 }
 
-TrainSchema.methods.setHeader = function (type, date, { name, visz }) {
+TrainSchema.methods.setHeader = function (type, { name, visz }) {
   this.type = type;
   if (name) this.name = name;
   if (visz) this.visz = visz;

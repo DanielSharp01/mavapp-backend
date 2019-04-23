@@ -73,10 +73,10 @@ module.exports = class TrainParser {
     let visz = viszSpan ? viszSpan.text().trim().replaceEmpty(null) : null;
 
     let spl = header.find("font").text().slice(1, -1).split(",").map(s => s.trim());
-    this.date = moment(spl[1], "YYYY.MM.DD.");
+    this.date = moment(spl[1], "YYYY.MM.DD");
     let relationSpl = spl[0].split(" - ").map(s => s.trim());
 
-    this.train.setHeader(type, spl[1], { name, visz });
+    this.train.setHeader(type, { name, visz });
     this.train.setRelation(relationSpl[0], relationSpl[1]);
   }
 
