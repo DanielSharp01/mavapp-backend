@@ -40,4 +40,8 @@ function fixJson(json) {
     .replace(/(['"])?([a-z0-9A-Z_]+)(['"])?\s*:/g, '"$2": ').replace(/@colon@/g, ':')
 }
 
+function getElviraIdFromOnClick(onclick) {
+  return JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
+}
+
 module.exports = { normalizeStationName, parseTimeTuple, splitElviraDateId, fixJson };

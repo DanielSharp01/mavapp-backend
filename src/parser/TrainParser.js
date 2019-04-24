@@ -1,4 +1,4 @@
-const { parseTimeTuple, fixJson, normalizeStationName } = require("../utils/parserUtils");
+const { parseTimeTuple, getElviraIdFromOnClick, normalizeStationName } = require("../utils/parserUtils");
 
 const cheerio = require("cheerio");
 const moment = require("moment");
@@ -45,39 +45,52 @@ module.exports = class TrainParser {
       this.train.setElviraDateId(this.reqParam.v);
     }
 
-    let name;
-    let type = words[words.length - 1];
-    if (contents.get(1).tagName === "br" || contents.get(1).tagName === "span") {
-      name = words.slice(1, -1).join(" ").trim().replaceEmpty(null);
-    } else {
-      name = words.slice(1).join(" ").trim().replaceEmpty(null);
-    }
-
-    if (contents.get(1).tagName == "img") {
-      type = contents.eq(1).attr("alt").trim();
-    }
-
-    if (contents.get(1).tagName == "ul") {
-      type = [];
-      contents.eq(1).find("li").each((i, li) => {
-        let liC = $(li).contents();
-        let spl = liC.eq(0).text().split(":").map(s => s.trim());
-        type[type.length] = {
-          rel: spl[0], type: spl[1]
-            && spl[1] !== "" ? spl[1] : liC.eq(1).attr("alt").trim()
-        };
-      });
-    }
-
+    let { name, type } = this.parseTypeAndName(words, contents);
     let viszSpan = header.find(".viszszam2");
     let visz = viszSpan ? viszSpan.text().trim().replaceEmpty(null) : null;
 
-    let spl = header.find("font").text().slice(1, -1).split(",").map(s => s.trim());
-    this.date = moment(spl[1], "YYYY.MM.DD");
+    let { date, from, to } = parseRelation(header.find("font").text());
+    this.date = date;
+    this.train.setHeader(type, { name, visz });
+    this.train.setRelation(from, to);
+  }
+
+  parseTypeAndName(words, contents) {
+    let name, type;
+    if (contents.get(1).tagName === "img") {
+      name = words.slice(1).join(" ").trim().replaceEmpty(null);
+      type = contents.eq(1).attr("alt").trim();
+    }
+    else if (contents.get(1).tagName == "ul") {
+      name = words.slice(1).join(" ").trim().replaceEmpty(null);
+      this.parseUlTypes(contents);
+    }
+    else {
+      name = words.slice(1, -1).join(" ").trim().replaceEmpty(null);
+      type = words[words.length - 1];
+    }
+    return { name, type };
+  }
+
+  parseUlTypes(contents) {
+    type = [];
+    contents.eq(1).find("li").each((i, li) => {
+      let liC = $(li).contents();
+      let spl = liC.eq(0).text().split(":").map(s => s.trim());
+      type[type.length] = {
+        rel: spl[0], type: spl[1]
+          && spl[1] !== "" ? spl[1] : liC.eq(1).attr("alt").trim()
+      };
+    });
+    return type;
+  }
+
+  parseRelation(text) {
+    let spl = text.slice(1, -1).split(",").map(s => s.trim());
+    let date = moment(spl[1], "YYYY.MM.DD");
     let relationSpl = spl[0].split(" - ").map(s => s.trim());
 
-    this.train.setHeader(type, { name, visz });
-    this.train.setRelation(relationSpl[0], relationSpl[1]);
+    return { date, from: relationSpl[0], to: relationSpl[1] };
   }
 
   parseTrainExpiry() {
@@ -95,7 +108,7 @@ module.exports = class TrainParser {
         explicitExpiry = true;
       }
 
-      let elviraDateId = JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
+      let elviraDateId = getElviraIdFromOnClick(onclick);
       self.train.setElviraDateId(elviraDateId);
     });
 
@@ -108,9 +121,10 @@ module.exports = class TrainParser {
     const $ = this.ch;
     let lastTrainStation = null;
 
-    let m = moment(this.date);
+    // Arbitrary day to know if some station times are on the next day compared to the departure time
+    // Station times on the next day will get 2000, 0, 2
     let lastMoments = {
-      departure: { scheduled: m, actual: m }
+      departure: moment(2000, 0, 1, 0, 0, 0)
     };
 
     let self = this;
@@ -142,36 +156,21 @@ module.exports = class TrainParser {
     let departure = parseTimeTuple(tds.eq(3));
     let platform = tds.eq(4).text().trim().replaceEmpty(null);
 
+    let lastDeparture = lastMoments.departure;
     if (arrival) {
-      arrival.scheduled = arrival.scheduled
-        && momentCombine(lastMoments.departure.scheduled, moment(arrival.scheduled, "HH:mm"));
-      arrival.actual = arrival.actual
-        && momentCombine(lastMoments.departure.scheduled || lastMoments.departure.actual,
-          moment(arrival.actual, "HH:mm"));
+      arrival = arrival.scheduled;
+      arrival = arrival && momentCombine(lastDeparture, moment(arrival, "HH:mm"));
+      fixDateOrder(lastMoments.departure, arrival);
     }
 
     if (departure) {
-      departure.scheduled = departure && departure.scheduled
-        && momentCombine(lastMoments.departure.scheduled, moment(departure.scheduled, "HH:mm"));
-      departure.actual = departure.actual
-        && momentCombine(lastMoments.departure.scheduled || lastMoments.departure.actual,
-          moment(departure.actual, "HH:mm"));
+      departure = departure.scheduled;
+      departure = departure && momentCombine(lastDeparture, moment(departure, "HH:mm"));
+      fixDateOrder(lastMoments.departure, departure);
     }
 
-    fixDateOrder(lastMoments.departure.scheduled, arrival && arrival.scheduled);
-    fixDateOrder(lastMoments.departure.actual, arrival && arrival.actual);
-
-    fixDateOrder(lastMoments.departure.scheduled, departure && departure.scheduled);
-    fixDateOrder(lastMoments.departure.actual, departure && departure.actual);
-
-    fixDateOrder(arrival && arrival.scheduled, arrival && arrival.actual);
-    fixDateOrder(departure && departure.scheduled, departure && departure.actual);
-
-    fixDateOrder(arrival && arrival.scheduled, departure && departure.scheduled);
-    fixDateOrder(arrival && arrival.actual, departure && departure.actual);
-
-    lastMoments.departure.scheduled = departure && departure.scheduled;
-    lastMoments.departure.actual = departure && (departure.actual || departure.scheduled);
+    fixDateOrder(arrival, departure);
+    lastMoments.departure = departure;
 
     this.promises.push(Promise.all([
       TrainStation.findOrCreate(this.trainNumber, normalizeStationName(name)),

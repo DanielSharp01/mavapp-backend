@@ -30,10 +30,10 @@ TrainStationSchema.statics.findOrCreate = async function (trainNumber, normName)
 
 TrainStationSchema.methods.setInfo = function ({ mavName, intDistance, platform, arrival, departure }) {
   this.mavName = mavName;
-  if (typeof intDistance !== "undefined") this.intDistance = intDistance;
-  if (typeof platform !== "undefined") this.platform = platform;
-  if (arrival && arrival.scheduled) this.arrival = arrival.scheduled;
-  if (departure && departure.scheduled) this.departure = departure.scheduled;
+  this.intDistance = intDistance;
+  this.platform = platform;
+  this.arrival = arrival;
+  this.departure = departure;
 }
 
 module.exports = db.model("TrainStation", TrainStationSchema);
