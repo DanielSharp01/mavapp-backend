@@ -1,23 +1,23 @@
 const { expect } = require('chai');
 const TRAINReqByNumber = require('../../../../src/middlewares/API/TRAINReqByNumber');
 
+let objectRepository = {
+  mavapi: {},
+  model: {
+    Train: {}
+  }
+};
+
+let req = {
+  params: { number: 12 }
+};
+
 describe("TRAINReqByNumber MW", function () {
   it("No train in database should set API result and call next", function (done) {
-    let req = {
-      params: { number: 12 }
-    };
-
     let res = { locals: {} };
-    let objectRepository = {
-      mavapi: {
-        TRAIN: ({ number, elviraDateId }) => Promise.resolve(number)
-      },
-      model: {
-        Train: {
-          findOne: () => Promise.resolve(null)
-        }
-      }
-    };
+
+    objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
+    objectRepository.model.Train.findOne = ({ number }) => Promise.resolve(null);
 
     TRAINReqByNumber(objectRepository)(req, res, () => {
       expect(res.locals.apiResult).to.eql(12);
@@ -26,21 +26,9 @@ describe("TRAINReqByNumber MW", function () {
   });
 
   it("Expired train in database should set API result and call next", function (done) {
-    let req = {
-      params: { number: 12 }
-    };
-
     let res = { locals: {} };
-    let objectRepository = {
-      mavapi: {
-        TRAIN: ({ number, elviraDateId }) => Promise.resolve(number)
-      },
-      model: {
-        Train: {
-          findOne: () => Promise.resolve({ fullKnowledge: false })
-        }
-      }
-    };
+    objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
+    objectRepository.model.Train.findOne = ({ number }) => Promise.resolve({ fullKnowledge: false });
 
     TRAINReqByNumber(objectRepository)(req, res, () => {
       expect(res.locals.apiResult).to.eql(12);
@@ -49,48 +37,46 @@ describe("TRAINReqByNumber MW", function () {
   });
 
   it("Full knowledge train in database should not set API result and call next", function (done) {
-    let req = {
-      params: { number: 12 }
-    };
-
     let res = { locals: {} };
-    let objectRepository = {
-      mavapi: {
-        TRAIN: ({ number, elviraDateId }) => Promise.resolve(number)
-      },
-      model: {
-        Train: {
-          findOne: ({ number }) => Promise.resolve({ id: number, fullKnowledge: true })
-        }
-      }
-    };
+    objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
+    objectRepository.model.Train.findOne = ({ number }) => Promise.resolve({ id: number, fullKnowledge: true });
 
     TRAINReqByNumber(objectRepository)(req, res, () => {
-      expect(res.locals.apiResult).to.eql(12);
+      expect(res.locals.apiResult).to.be.undefined;
       expect(res.locals.train.id).to.eql(12)
       done();
     });
   });
 
-  it("mavapi promise rejection should call next with error", function (done) {
-    let req = {
-      params: { number: 12 }
-    };
-
+  it("Expired train with mavapi promise rejection should call next with error", function (done) {
     let res = { locals: {} };
-    let objectRepository = {
-      mavapi: {
-        TRAIN: ({ number, elviraDateId }) => Promise.reject("some error")
-      },
-      model: {
-        Train: {
-          findOne: ({ number }) => Promise.resolve({ id: number, fullKnowledge: true })
-        }
-      }
-    };
+    objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.reject("rejected mavapi");
+    objectRepository.model.Train.findOne = ({ number }) => Promise.resolve({ fullKnowledge: false });
 
     TRAINReqByNumber(objectRepository)(req, res, (err) => {
-      expect(err).to.eql("some error");
+      expect(err).to.eql("rejected mavapi");
+      done();
+    });
+  });
+
+  it("db promise rejection should call next with error", function (done) {
+    let res = { locals: {} };
+    objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
+    objectRepository.model.Train.findOne = ({ number }) => Promise.reject("unavailable db");
+
+    TRAINReqByNumber(objectRepository)(req, res, (err) => {
+      expect(err).to.eql("unavailable db");
+      done();
+    });
+  });
+
+  it("If no ':number' parameter should call next with error", function (done) {
+    let res = { locals: {} };
+    objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
+    objectRepository.model.Train.findOne = ({ number }) => Promise.reject("unavailable db");
+
+    TRAINReqByNumber(objectRepository)({}, res, (err) => {
+      expect(err).to.eql("No train number specified");
       done();
     });
   });
