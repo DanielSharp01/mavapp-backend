@@ -1,21 +1,24 @@
 const {
+  splitElviraDateId,
   parseTimeTuple,
   getElviraIdFromOnClick,
   normalizeStationName
-} = require("../utils/parserUtils");
+} = require("../../utils/parserUtils");
 const cheerio = require("cheerio");
 const moment = require("moment");
 
 function parseHeader(cheerio) {
   const $ = cheerio;
   const header = $("th.title").first();
+  if (!header.get(0)) return;
+
   const contents = header.contents();
   const textNode = contents.eq(0).text();
   const words = textNode.split(" ").map(w => w.trim());
   let number = parseInt(words[0]);
-  let { name, type } = parseTypeAndName(words, contents);
+  let { name, type } = parseTypeAndName(cheerio, words, contents);
   let viszSpan = header.find(".viszszam2");
-  let visz = viszSpan ? viszSpan.text().trim().replaceEmpty(null) : null;
+  let visz = viszSpan.text().trim().replaceEmpty(null);
 
   let { date, from, to } = parseRelation(header.find("font").text());
   return {
@@ -23,15 +26,15 @@ function parseHeader(cheerio) {
   }
 }
 
-function parseTypeAndName(words, contents) {
+function parseTypeAndName(cheerio, words, contents) {
   let name, type;
-  if (contents.get(1).tagName === "img") {
+  if (contents.get(1) && contents.get(1).tagName === "img") {
     name = words.slice(1).join(" ").trim().replaceEmpty(null);
     type = contents.eq(1).attr("alt").trim();
   }
-  else if (contents.get(1).tagName == "ul") {
+  else if (contents.get(1) && contents.get(1).tagName == "ul") {
     name = words.slice(1).join(" ").trim().replaceEmpty(null);
-    parseUlTypes(contents);
+    type = parseUlTypes(cheerio, contents);
   }
   else {
     name = words.slice(1, -1).join(" ").trim().replaceEmpty(null);
@@ -40,13 +43,15 @@ function parseTypeAndName(words, contents) {
   return { name, type };
 }
 
-function parseUlTypes(contents) {
+function parseUlTypes(cheerio, contents) {
+  const $ = cheerio;
   type = [];
   contents.eq(1).find("li").each((i, li) => {
     let liC = $(li).contents();
     let spl = liC.eq(0).text().split(":").map(s => s.trim());
+    let relSpl = spl[0].split(" - ").map(s => s.trim());
     type[type.length] = {
-      rel: spl[0], type: spl[1]
+      rel: { from: relSpl[0], to: relSpl[1] }, type: spl[1]
         && spl[1] !== "" ? spl[1] : liC.eq(1).attr("alt").trim()
     };
   });
@@ -72,7 +77,7 @@ function parseExpiry(cheerio) {
     if (!onclick) return; // This is probably not an expiry date li
 
     if ($(li).attr("style")) {
-      expiry = a.text().split("-")[1];
+      expiry = moment(a.text().split("-")[1], "YYYY.MM.DD");
       explicitExpiry = true;
     }
     else return;
@@ -93,7 +98,7 @@ function parseStations(cheerio) {
   $("table.vt tr")
     .filter((i, tr) => (typeof $(tr).attr("class") !== "undefined") && (typeof $(tr).attr("id") === "undefined"))
     .each((i, tr) => {
-      const tds = tr.children("td");
+      const tds = $(tr).children("td");
       let intDistance = parseInt(tds.eq(0).text());
       if (isNaN(intDistance)) intDistance = -1;
       let name = tds.eq(1).text();
@@ -110,24 +115,26 @@ function parseStations(cheerio) {
         platform
       })
     });
+  return stations;
 }
 
 module.exports = () => {
   return (req, res, next) => {
-    if (!res.locals.apiResult) return next();
+    const apiRes = res.locals.apiResult;
+    if (!apiRes) return next();
 
-    const apiResult = res.locals.apiResult;
-    if (!apiRes.d.result || !apiRes.d.result.line || apiRes.d.result.line.length === 0)
-      return next("Parser failed because request is empty.");
+    if (!apiRes.d || !apiRes.d.result || !apiRes.d.result.html || !apiRes.d.result.line || apiRes.d.result.line.length === 0)
+      return next("Parser failed because request is empty");
 
     let ch = cheerio.load(apiRes.d.result.html, { decodeEntities: true });
     let expiryObj = parseExpiry(ch);
-    let elviraDateId = expiryObj.elviraDateId || (apiResult.d.param.v ? splitElviraDateId(apiResult.d.param.v) : undefined);
+    let elviraDateId = expiryObj.elviraDateId || (apiRes.d.param && apiRes.d.param.v ? apiRes.d.param.v : undefined);
+    elviraDateId = elviraDateId && splitElviraDateId(elviraDateId);
     res.locals.parsedTrain = {
       header: parseHeader(ch),
       stations: parseStations(ch),
       expiry: expiryObj.expiry,
-      elviraDateId,
+      elviraId: elviraDateId && elviraDateId.elviraId,
       polyline: apiRes.d.result.line[0].points
     };
 

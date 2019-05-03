@@ -11,7 +11,7 @@ function normalizeStationName(name) {
     .replace("railway station crossing", "").replace("railway station", "").replace("train station", "")
     .replace("vonatallomas", "").replace("vasutallomas", "").replace("pu", "").replace("mav pu", "")
     .replace("vm", "").replace("palyaudvar", "")
-    .replace("-", " ").replace(".", "").replace("/\s\s+/g", " ").replace("/\[.?\]/g", " ").trim();
+    .replace("-", " ").replace(".", "").replace(/n\s+/g, " ").replace(/\[.*\]/g, "").trim();
 }
 
 function parseTimeTuple(elem) {
@@ -44,4 +44,4 @@ function getElviraIdFromOnClick(onclick) {
   return JSON.parse(fixJson(onclick.slice(onclick.indexOf("{"), onclick.indexOf("}") + 1))).v;
 }
 
-module.exports = { normalizeStationName, parseTimeTuple, splitElviraDateId, fixJson };
+module.exports = { normalizeStationName, parseTimeTuple, splitElviraDateId, fixJson, getElviraIdFromOnClick };

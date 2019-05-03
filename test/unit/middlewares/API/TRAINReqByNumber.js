@@ -19,8 +19,9 @@ describe("TRAINReqByNumber MW", function () {
     objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
     objectRepository.model.Train.findOne = ({ number }) => Promise.resolve(null);
 
-    TRAINReqByNumber(objectRepository)(req, res, () => {
-      expect(res.locals.apiResult).to.eql(12);
+    TRAINReqByNumber(objectRepository)(req, res, (err) => {
+      expect(err).to.be.undefined;
+      expect(res.locals.apiResult).to.equal(12);
       done();
     });
   });
@@ -30,8 +31,9 @@ describe("TRAINReqByNumber MW", function () {
     objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
     objectRepository.model.Train.findOne = ({ number }) => Promise.resolve({ fullKnowledge: false });
 
-    TRAINReqByNumber(objectRepository)(req, res, () => {
-      expect(res.locals.apiResult).to.eql(12);
+    TRAINReqByNumber(objectRepository)(req, res, (err) => {
+      expect(err).to.be.undefined;
+      expect(res.locals.apiResult).to.equal(12);
       done();
     });
   });
@@ -41,9 +43,10 @@ describe("TRAINReqByNumber MW", function () {
     objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(number)
     objectRepository.model.Train.findOne = ({ number }) => Promise.resolve({ id: number, fullKnowledge: true });
 
-    TRAINReqByNumber(objectRepository)(req, res, () => {
+    TRAINReqByNumber(objectRepository)(req, res, (err) => {
+      expect(err).to.be.undefined;
       expect(res.locals.apiResult).to.be.undefined;
-      expect(res.locals.train.id).to.eql(12)
+      expect(res.locals.train.id).to.equal(12)
       done();
     });
   });
@@ -54,7 +57,7 @@ describe("TRAINReqByNumber MW", function () {
     objectRepository.model.Train.findOne = ({ number }) => Promise.resolve({ fullKnowledge: false });
 
     TRAINReqByNumber(objectRepository)(req, res, (err) => {
-      expect(err).to.eql("rejected mavapi");
+      expect(err).to.equal("rejected mavapi");
       done();
     });
   });
@@ -65,7 +68,7 @@ describe("TRAINReqByNumber MW", function () {
     objectRepository.model.Train.findOne = ({ number }) => Promise.reject("unavailable db");
 
     TRAINReqByNumber(objectRepository)(req, res, (err) => {
-      expect(err).to.eql("unavailable db");
+      expect(err).to.equal("unavailable db");
       done();
     });
   });
@@ -76,7 +79,7 @@ describe("TRAINReqByNumber MW", function () {
     objectRepository.model.Train.findOne = ({ number }) => Promise.reject("unavailable db");
 
     TRAINReqByNumber(objectRepository)({}, res, (err) => {
-      expect(err).to.eql("No train number specified");
+      expect(err).to.equal("No train number specified");
       done();
     });
   });

@@ -20,11 +20,12 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.model.Train.findOne = ({ elviraId }) => Promise.resolve(null);
 
     TRAINReqByElvira(objectRepository)(req, res, (err) => {
-      expect(req.elviraId.elviraId).to.be.eql(111111);
-      expect(req.elviraId.date.year()).to.be.eql(2011);
-      expect(req.elviraId.date.month()).to.be.eql(10);
-      expect(req.elviraId.date.date()).to.be.eql(11); // Needed for midnight tests
-      expect(res.locals.apiResult).to.eql(req.elviraId);
+      expect(err).to.be.undefined;
+      expect(req.elviraId.elviraId).to.be.equal(111111);
+      expect(req.elviraId.date.year()).to.be.equal(2011);
+      expect(req.elviraId.date.month()).to.be.equal(10);
+      expect(req.elviraId.date.date()).to.be.equal(11); // Needed for midnight tests
+      expect(res.locals.apiResult).to.equal(req.elviraId);
       done();
     });
   });
@@ -40,13 +41,14 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(elviraDateId)
     objectRepository.model.Train.findOne = ({ elviraId }) => Promise.resolve(null);
 
-    TRAINReqByElvira(objectRepository)(req, res, () => {
-      expect(req.elviraId.elviraId).to.be.eql(111111);
+    TRAINReqByElvira(objectRepository)(req, res, (err) => {
+      expect(err).to.be.undefined;
+      expect(req.elviraId.elviraId).to.be.equal(111111);
       now = moment();
-      expect(req.elviraId.date.year()).to.be.eql(now.year());
-      expect(req.elviraId.date.month()).to.be.eql(now.month());
+      expect(req.elviraId.date.year()).to.be.equal(now.year());
+      expect(req.elviraId.date.month()).to.be.equal(now.month());
       expect(req.elviraId.date.date()).to.be.oneOf([lastDate, now.date()]); // Needed for midnight tests
-      expect(res.locals.apiResult).to.eql(req.elviraId);
+      expect(res.locals.apiResult).to.equal(req.elviraId);
       done();
     });
   });
@@ -61,8 +63,9 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.model.Train.findOne = ({ number }) => Promise.resolve(null);
 
 
-    TRAINReqByElvira(objectRepository)(req, res, () => {
-      expect(res.locals.apiResult).to.eql(req.elviraId);
+    TRAINReqByElvira(objectRepository)(req, res, (err) => {
+      expect(err).to.be.undefined;
+      expect(res.locals.apiResult).to.equal(req.elviraId);
       done();
     });
   });
@@ -75,8 +78,9 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(elviraDateId)
     objectRepository.model.Train.findOne = ({ number }) => Promise.resolve({ fullKnowledge: false });
 
-    TRAINReqByElvira(objectRepository)(req, res, () => {
-      expect(res.locals.apiResult).to.eql(req.elviraId);
+    TRAINReqByElvira(objectRepository)(req, res, (err) => {
+      expect(err).to.be.undefined;
+      expect(res.locals.apiResult).to.equal(req.elviraId);
       done();
     });
   });
@@ -89,9 +93,10 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.mavapi.TRAIN = ({ number, elviraDateId }) => Promise.resolve(elviraDateId)
     objectRepository.model.Train.findOne = ({ elviraId }) => Promise.resolve({ elviraId, fullKnowledge: true });
 
-    TRAINReqByElvira(objectRepository)(req, res, () => {
+    TRAINReqByElvira(objectRepository)(req, res, (err) => {
+      expect(err).to.be.undefined;
       expect(res.locals.apiResult).to.be.undefined;
-      expect(res.locals.train.elviraId).to.eql(111111)
+      expect(res.locals.train.elviraId).to.equal(111111)
       done();
     });
   });
@@ -105,7 +110,7 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.model.Train.findOne = ({ elviraId }) => Promise.resolve({ fullKnowledge: false });
 
     TRAINReqByElvira(objectRepository)(req, res, (err) => {
-      expect(err).to.eql("rejected mavapi");
+      expect(err).to.equal("rejected mavapi");
       done();
     });
   });
@@ -119,7 +124,7 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.model.Train.findOne = ({ elviraId }) => Promise.reject("unavailable db");
 
     TRAINReqByElvira(objectRepository)(req, res, (err) => {
-      expect(err).to.eql("unavailable db");
+      expect(err).to.equal("unavailable db");
       done();
     });
   });
@@ -130,7 +135,7 @@ describe("TRAINReqByElvira MW", function () {
     objectRepository.model.Train.findOne = ({ elviraId }) => Promise.reject("unavailable db");
 
     TRAINReqByElvira(objectRepository)({}, res, (err) => {
-      expect(err).to.eql("No elviraid specified");
+      expect(err).to.equal("No elviraid specified");
       done();
     });
   });
