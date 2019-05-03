@@ -118,6 +118,19 @@ function parseStations(cheerio) {
   return stations;
 }
 
+function findValidityInfo(cheerio) {
+  const $ = cheerio;
+  let validityInfo;
+  $("h5").each((i, h5) => {
+    if ($(h5).text().trim() == "Közlekedik:") {
+      validityInfo = $(h5).next("ul").find("li").eq(0).text().trim();
+      return false;
+    }
+  });
+
+  return validityInfo;
+}
+
 module.exports = () => {
   return (req, res, next) => {
     const apiRes = res.locals.apiResult;
@@ -135,7 +148,8 @@ module.exports = () => {
       stations: parseStations(ch),
       expiry: expiryObj.expiry,
       elviraId: elviraDateId && elviraDateId.elviraId,
-      polyline: apiRes.d.result.line[0].points
+      polyline: apiRes.d.result.line[0].points,
+      alwaysValid: findValidityInfo(ch) == "naponta"
     };
 
     return next();

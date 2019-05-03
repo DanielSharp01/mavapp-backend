@@ -407,6 +407,7 @@ describe("TRAINparse MW", function () {
         }
       }
     };
+
     TRAINparseMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.stations).to.eql(
@@ -472,6 +473,56 @@ describe("TRAINparse MW", function () {
     TRAINparseMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.stations).to.eql([]);
+      done();
+    });
+  });
+
+  it("Train is always valid", function (done) {
+    let res = {
+      locals: {
+        apiResult: {
+          d: {
+            result:
+            {
+              html: `<h5>Something else</h5>
+                    <h5>Közlekedik:</h5>
+                    <ul>
+                      <li>naponta</li>
+                    </ul>`,
+              line: [{ points: "_p~iF~ps|U_ulLnnqC_mqNvxq`@" }]
+            }
+          }
+        }
+      }
+    };
+    TRAINparseMW()({}, res, (err) => {
+      expect(err).to.be.undefined;
+      expect(res.locals.parsedTrain.alwaysValid).to.be.true;
+      done();
+    });
+  });
+
+  it("Train is not always valid", function (done) {
+    let res = {
+      locals: {
+        apiResult: {
+          d: {
+            result:
+            {
+              html: `<h5>Something else</h5>
+                    <h5>Közlekedik:</h5>
+                    <ul>
+                      <li>definetely not daily</li>
+                    </ul>`,
+              line: [{ points: "_p~iF~ps|U_ulLnnqC_mqNvxq`@" }]
+            }
+          }
+        }
+      }
+    };
+    TRAINparseMW()({}, res, (err) => {
+      expect(err).to.be.undefined;
+      expect(res.locals.parsedTrain.alwaysValid).to.be.false;
       done();
     });
   });
