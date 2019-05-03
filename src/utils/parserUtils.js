@@ -1,7 +1,7 @@
 const moment = require("moment");
 
 Object.defineProperty(String.prototype, "replaceEmpty", {
-  value: function replaceEmpty(def = undefined) {
+  value: function (def = undefined) {
     return this.length == 0 ? def : this.toString();
   }
 });

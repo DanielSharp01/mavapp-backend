@@ -129,7 +129,7 @@ module.exports = () => {
     let ch = cheerio.load(apiRes.d.result.html, { decodeEntities: true });
     let expiryObj = parseExpiry(ch);
     let elviraDateId = expiryObj.elviraDateId || (apiRes.d.param && apiRes.d.param.v ? apiRes.d.param.v : undefined);
-    elviraDateId = elviraDateId && splitElviraDateId(elviraDateId);
+    elviraDateId = splitElviraDateId(elviraDateId);
     res.locals.parsedTrain = {
       header: parseHeader(ch),
       stations: parseStations(ch),
