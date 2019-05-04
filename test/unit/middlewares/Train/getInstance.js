@@ -4,7 +4,7 @@ const getInstanceMW = require('../../../../src/middlewares/Train/getInstance');
 
 Date.now = () => new Date('2019') // Mock date
 
-describe("getInstance MW (Train)", function () {
+describe("getInstance MW", function () {
 
   let objectRepository = {
     model: {

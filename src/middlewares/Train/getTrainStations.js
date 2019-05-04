@@ -5,6 +5,7 @@ module.exports = (objectRepository) => {
   const TrainStationLink = objectRequire(objectRepository, "model.TrainStationLink");
 
   return async (req, res, next) => {
+    if (!res.locals || !res.locals.train) return next();
     try {
       let stations = await TrainStation.find({ trainNumber: res.locals.train.number }).populate("station");
       let stationLinks = await TrainStationLink.find({ trainNumber: res.locals.train.number });
@@ -19,7 +20,7 @@ module.exports = (objectRepository) => {
       res.locals.stations = [];
       let key = stationLinks[null].toNormName;
       while (key) {
-        res.locals.tations.push(stations[key]);
+        res.locals.stations.push(stations[key]);
         key = stationLinks[key].toNormName;
       }
     }
