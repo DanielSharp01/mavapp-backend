@@ -1,10 +1,12 @@
 const moment = require("moment");
-const { splitElviraDateId } = require("../../utils/parserUtils");
+const objectRequire = require("../../utils/objectRequire");
 
 module.exports = (objectRepository) => {
+  const TrainInstance = objectRequire(objectRepository, "model.TrainInstance");
+
   return async (req, res, next) => {
     try {
-      if (res.train.elviraId) {
+      if (res.locals.train.elviraId) {
         let date;
         if (req.elviraId) {
           date = req.elviraId.date;
@@ -14,8 +16,8 @@ module.exports = (objectRepository) => {
           date = moment({ year: now.year(), month: now.month(), date: now.date() });
         }
 
-        res.instance = await objectRepository.TrainInstance.findOne({
-          elviraId: res.train.elviraId,
+        res.instance = await TrainInstance.findOne({
+          elviraId: res.locals.train.elviraId,
           date
         });
       }

@@ -21,12 +21,12 @@ module.exports = () => {
     } : null;
 
     res.result = {
-      number: res.train.number,
-      elviraId: res.train.elviraId,
-      type: res.train.type,
-      name: res.train.name,
-      visz: res.train.visz,
-      polyline: res.train.polyline,
+      number: res.locals.train.number,
+      elviraId: res.locals.train.elviraId,
+      type: res.locals.train.type,
+      name: res.locals.train.name,
+      visz: res.locals.train.visz,
+      polyline: res.locals.train.encodedPolyline,
       stations,
     }
 

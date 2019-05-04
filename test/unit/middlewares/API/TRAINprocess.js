@@ -58,7 +58,8 @@ describe("TRAINprocess MW", function () {
             date: moment(),
           },
           expiry: moment({ year: 2019, month: 4, date: 30 }),
-          alwaysValid: true
+          alwaysValid: true,
+          polyline: "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
         }
       }
     };
@@ -81,7 +82,9 @@ describe("TRAINprocess MW", function () {
         expect(savedTrain.expiry.year()).to.equal(2019);
         expect(savedTrain.expiry.month()).to.equal(4);
         expect(savedTrain.expiry.date()).to.equal(30);
+        expect(savedTrain.polyline).to.equal("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
         expect(savedTrain.alwaysValid).to.be.true;
+        expect(savedTrain).to.be.equal(res.locals.train);
         done();
       }
       catch (err) {

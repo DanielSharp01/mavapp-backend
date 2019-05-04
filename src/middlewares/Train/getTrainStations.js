@@ -1,8 +1,13 @@
+const objectRequire = require("../../utils/objectRequire");
+
 module.exports = (objectRepository) => {
+  const TrainStation = objectRequire(objectRepository, "model.TrainStation");
+  const TrainStationLink = objectRequire(objectRepository, "model.TrainStationLink");
+
   return async (req, res, next) => {
     try {
-      let stations = await objectRepository.TrainStation.find({ trainNumber: res.train.number }).populate("station");
-      let stationLinks = await objectRepository.TrainStationLink.find({ trainNumber: res.train.number });
+      let stations = await TrainStation.find({ trainNumber: res.locals.train.number }).populate("station");
+      let stationLinks = await TrainStationLink.find({ trainNumber: res.locals.train.number });
       stations = stations.reduce((map, st) => {
         map[st.normName] = st;
         return map;

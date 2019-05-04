@@ -5,7 +5,6 @@ const dispatcher = new (require("./dispatcher")(objectRepository))();
 const { ROUTE } = require("./apis/mavapis");
 const RouteParser = require("./parser/RouteParser");
 const statusCodeMW = require("./middlewares/commons/statusCode");
-const moment = require("moment");
 
 // require("./model/stationSeed")();
 
@@ -19,7 +18,7 @@ app.get((req, res, next) => {
   next();
 });
 
-require("./routes/Train")(app, objectRepository, dispatcher);
+require("./routes/Train")(app, objectRepository);
 require("./routes/Trains")(app, objectRepository);
 require("./routes/Station")(app, objectRepository, dispatcher);
 require("./routes/Route")(app, objectRepository);

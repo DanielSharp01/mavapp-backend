@@ -29,7 +29,7 @@ module.exports = (objectRepository) => {
         if (header.date && header.date.isSame(moment(), "day")) {
           train.validityExpiry = moment().startOf('day').add(1, "days");
         }
-        res.locals.savedTrain = train;
+        res.locals.train = train;
         return train.save();
       }));
     })();
