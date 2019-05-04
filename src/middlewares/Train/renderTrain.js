@@ -1,6 +1,6 @@
 module.exports = () => {
   return (req, res, next) => {
-    let stations = res.stations.map(station => {
+    let stations = res.locals.stations.map(station => {
       return {
         name: station.mavName || (station.station && station.station.displayName),
         normName: station.normName,
@@ -13,14 +13,14 @@ module.exports = () => {
       };
     });
 
-    let instance = res.instance ? {
-      status: res.instance.status,
-      date: res.instance.date,
-      position: res.instance.position,
-      delay: res.instance.delay
+    let instance = res.locals.instance ? {
+      status: res.locals.instance.status,
+      date: res.locals.instance.date,
+      position: res.locals.instance.position,
+      delay: res.locals.instance.delay
     } : null;
 
-    res.result = {
+    res.locals.result = {
       number: res.locals.train.number,
       elviraId: res.locals.train.elviraId,
       type: res.locals.train.type,

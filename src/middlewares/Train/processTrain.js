@@ -8,7 +8,7 @@ module.exports = (objectRepository) => {
   const TrainStation = objectRequire(objectRepository, "model.TrainStation");
   const TrainStationLink = objectRequire(objectRepository, "model.TrainStationLink");
 
-  return async (req, res, next) => {
+  return (req, res, next) => {
     const parsedTrain = res.locals.parsedTrain;
     if (!parsedTrain) return next();
 
@@ -89,7 +89,6 @@ module.exports = (objectRepository) => {
       promises.push(TrainStationLink.findOrCreate(header.number, lastNormName, null).then(link => link.save()));
     })();
 
-    await Promise.all(promises);
-    return next();
+    Promise.all(promises).then(() => next()).catch(err => next(err));
   }
 }

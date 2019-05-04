@@ -1,6 +1,8 @@
 const { expect } = require('chai');
 const moment = require("moment");
-const TRAINprocessMW = require('../../../../src/middlewares/API/TRAINprocess');
+const processTrainMW = require('../../../../src/middlewares/Train/processTrain');
+
+Date.now = () => new Date('2019') // Mock date
 
 let mockSaveTrainCallback = () => { };
 let mockSaveTrainStationCallback = () => { };
@@ -43,7 +45,7 @@ let objectRepository = {
 };
 
 
-describe("TRAINprocess MW", function () {
+describe("processTrain MW", function () {
   it("Parsed train -> Train model transformation", function (done) {
     let res = {
       locals: {
@@ -70,7 +72,7 @@ describe("TRAINprocess MW", function () {
       return Promise.resolve(train);
     }
 
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
         expect(savedTrain.number).to.equal(652);
@@ -82,9 +84,9 @@ describe("TRAINprocess MW", function () {
         expect(savedTrain.expiry.year()).to.equal(2019);
         expect(savedTrain.expiry.month()).to.equal(4);
         expect(savedTrain.expiry.date()).to.equal(30);
-        expect(savedTrain.polyline).to.equal("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
+        expect(savedTrain.encodedPolyline).to.equal("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
         expect(savedTrain.alwaysValid).to.be.true;
-        expect(savedTrain).to.be.equal(res.locals.train);
+        expect(savedTrain).to.equal(res.locals.train);
         done();
       }
       catch (err) {
@@ -114,7 +116,7 @@ describe("TRAINprocess MW", function () {
       return Promise.resolve(train);
     }
 
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
         expect(savedTrain.validityExpiry).to.be.satisfy((m) => m.isSame(moment().startOf("day").add(1, "days"), "day"));
@@ -147,7 +149,7 @@ describe("TRAINprocess MW", function () {
       return Promise.resolve(train);
     }
 
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
         expect(savedTrain.validityExpiry.year()).to.equal(2019);
@@ -206,7 +208,7 @@ describe("TRAINprocess MW", function () {
       return Promise.resolve(station);
     }
 
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
 
@@ -295,7 +297,7 @@ describe("TRAINprocess MW", function () {
       return Promise.resolve(station);
     }
 
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
 
@@ -360,7 +362,7 @@ describe("TRAINprocess MW", function () {
       return Promise.resolve(link);
     }
 
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
         expect(savedLinks).to.have.property("null.a").that.includes({ trainNumber: 652, fromNormName: null, toNormName: "a" });
@@ -378,7 +380,7 @@ describe("TRAINprocess MW", function () {
   it("If parsed train number is NaN should call next with error", function (done) {
     let res = { locals: { parsedTrain: { header: { number: NaN } } } };
 
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.equal("TRAIN parsing failed");
         done();
@@ -393,10 +395,62 @@ describe("TRAINprocess MW", function () {
     let res = {
       locals: {}
     };
-    TRAINprocessMW(objectRepository)({}, res, (err) => {
+    processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
         expect(res.locals.savedTrain).to.be.undefined;
+        done();
+      }
+      catch (err) {
+        done(err);
+      }
+    });
+  });
+
+  it("Database problem when saving should call next with error", function (done) {
+    let res = {
+      locals: {
+        parsedTrain: {
+          header:
+          {
+            number: 652,
+            date: moment(),
+          }
+        }
+      }
+    };
+
+    mockSaveTrainCallback = () => Promise.reject("Rejection test");
+
+    processTrainMW(objectRepository)({}, res, (err) => {
+      try {
+        expect(err).to.equal("Rejection test");
+        done();
+      }
+      catch (err) {
+        done(err);
+      }
+    });
+  });
+
+  it("Database problem when creating should call next with error", function (done) {
+    let res = {
+      locals: {
+        parsedTrain: {
+          header:
+          {
+            number: 652,
+            date: moment(),
+          }
+        }
+      }
+    };
+
+    objectRepository.model.Train.findOrCreate = () => Promise.reject("Rejection test");
+
+    processTrainMW(objectRepository)({}, res, (err) => {
+      try {
+        expect(err).to.equal("Rejection test");
         done();
       }
       catch (err) {

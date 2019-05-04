@@ -16,10 +16,10 @@ module.exports = (objectRepository) => {
         map[stl.fromNormName] = stl;
         return map;
       }, {});
-      res.stations = [];
+      res.locals.stations = [];
       let key = stationLinks[null].toNormName;
       while (key) {
-        res.stations.push(stations[key]);
+        res.locals.tations.push(stations[key]);
         key = stationLinks[key].toNormName;
       }
     }

@@ -6,7 +6,7 @@ module.exports = (objectRepository) => {
 
   return async (req, res, next) => {
     try {
-      if (res.locals.train.elviraId) {
+      if (res.locals && res.locals.train && res.locals.train.elviraId) {
         let date;
         if (req.elviraId) {
           date = req.elviraId.date;
@@ -16,7 +16,7 @@ module.exports = (objectRepository) => {
           date = moment({ year: now.year(), month: now.month(), date: now.date() });
         }
 
-        res.instance = await TrainInstance.findOne({
+        res.locals.instance = await TrainInstance.findOne({
           elviraId: res.locals.train.elviraId,
           date
         });

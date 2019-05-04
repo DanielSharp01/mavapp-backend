@@ -1,7 +1,7 @@
-const TRAINReqByNumberMW = require("../middlewares/API/TRAINReqByNumber");
-const TRAINReqByElviraMW = require("../middlewares/API/TRAINReqByElvira");
-const TRAINparseMW = require("../middlewares/API/TRAINparse");
-const TRAINprocessMW = require("../middlewares/API/TRAINprocess");
+const reqTrainByNumberMW = require("../middlewares/Train/reqTrainByNumber");
+const reqTrainByElviraIdMW = require("../middlewares/Train/reqTrainByElviraId");
+const parseTrainMW = require("../middlewares/Train/parseTrain");
+const processTrainMW = require("../middlewares/Train/processTrain"); 
 const getTrainStationsMW = require("../middlewares/Train/getTrainStations");
 const getInstanceMW = require("../middlewares/Train/getInstance");
 const renderTrainMW = require("../middlewares/Train/renderTrain");
@@ -9,9 +9,9 @@ const statusCodeMW = require("../middlewares/commons/statusCode");
 
 module.exports = (app, objectRepository) => {
   app.use('/train/number/:number',
-    TRAINReqByNumberMW(objectRepository),
-    TRAINparseMW(),
-    TRAINprocessMW(objectRepository),
+    reqTrainByNumberMW(objectRepository),
+    parseTrainMW(),
+    processTrainMW(objectRepository),
     getTrainStationsMW(objectRepository),
     getInstanceMW(objectRepository),
     renderTrainMW(),
@@ -19,9 +19,9 @@ module.exports = (app, objectRepository) => {
   );
 
   app.get('/train/elviraid/:elviraId',
-    TRAINReqByElviraMW(objectRepository),
-    TRAINparseMW(),
-    TRAINprocessMW(objectRepository),
+    reqTrainByElviraIdMW(objectRepository),
+    parseTrainMW(),
+    processTrainMW(objectRepository),
     getTrainStationsMW(objectRepository),
     getInstanceMW(objectRepository),
     renderTrainMW(objectRepository),

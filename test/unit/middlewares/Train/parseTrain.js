@@ -1,8 +1,10 @@
 const { expect } = require('chai');
 const moment = require("moment");
-const TRAINparseMW = require('../../../../src/middlewares/API/TRAINparse');
+const parseTrainMW = require('../../../../src/middlewares/Train/parseTrain');
 
-describe("TRAINparse MW", function () {
+Date.now = () => new Date('2019') // Mock date
+
+describe("parseTrain MW", function () {
   it("Polyline is copyed", function (done) {
     let res = {
       locals: {
@@ -18,9 +20,9 @@ describe("TRAINparse MW", function () {
       }
     };
 
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
-      expect(res.locals.parsedTrain.polyline).to.be.equal("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
+      expect(res.locals.parsedTrain.polyline).to.equal("_p~iF~ps|U_ulLnnqC_mqNvxq`@");
       done();
     });
   });
@@ -45,7 +47,7 @@ describe("TRAINparse MW", function () {
       }
     };
 
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("személyvonat");
@@ -80,7 +82,7 @@ describe("TRAINparse MW", function () {
       }
     };
 
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("személyvonat");
@@ -115,7 +117,7 @@ describe("TRAINparse MW", function () {
       }
     };
 
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("InterCity");
@@ -155,7 +157,7 @@ describe("TRAINparse MW", function () {
       }
     };
 
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.eql(
@@ -195,7 +197,7 @@ describe("TRAINparse MW", function () {
       }
     };
 
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("InterCity");
@@ -235,7 +237,7 @@ describe("TRAINparse MW", function () {
         }
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.expiry.year()).to.equal(2019);
       expect(res.locals.parsedTrain.expiry.month()).to.equal(4);
@@ -246,7 +248,6 @@ describe("TRAINparse MW", function () {
   });
 
   it("No explicit expiry date should make expiry date the next year's first day", function (done) {
-    let lastYear = moment().year();
     let res = {
       locals: {
         apiResult: {
@@ -260,9 +261,9 @@ describe("TRAINparse MW", function () {
         }
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
-      expect(res.locals.parsedTrain.expiry.year()).to.oneOf([moment().year() + 1, lastYear + 1]); // Testing on year boundary should not cause fail
+      expect(res.locals.parsedTrain.expiry.year()).to.equal(moment().year() + 1);
       expect(res.locals.parsedTrain.expiry.month()).to.equal(0);
       expect(res.locals.parsedTrain.expiry.date()).to.equal(1);
       done();
@@ -321,7 +322,7 @@ describe("TRAINparse MW", function () {
         }
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.stations).to.eql(
         [
@@ -408,7 +409,7 @@ describe("TRAINparse MW", function () {
       }
     };
 
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.stations).to.eql(
         [
@@ -470,7 +471,7 @@ describe("TRAINparse MW", function () {
         }
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.stations).to.eql([]);
       done();
@@ -495,7 +496,7 @@ describe("TRAINparse MW", function () {
         }
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.alwaysValid).to.be.true;
       done();
@@ -520,7 +521,7 @@ describe("TRAINparse MW", function () {
         }
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.alwaysValid).to.be.false;
       done();
@@ -544,7 +545,7 @@ describe("TRAINparse MW", function () {
         }
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.elviraId).equal(111111);
       done();
@@ -555,7 +556,7 @@ describe("TRAINparse MW", function () {
     let res = {
       locals: {}
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain).to.be.undefined;
       done();
@@ -568,7 +569,7 @@ describe("TRAINparse MW", function () {
         apiResult: {}
       }
     };
-    TRAINparseMW()({}, res, (err) => {
+    parseTrainMW()({}, res, (err) => {
       expect(err).to.be.eql("Parser failed because request is empty");
       expect(res.locals.parsedTrain).to.be.undefined;
       done();
