@@ -1,10 +1,10 @@
 const moment = require("moment");
 const objectRequire = require("../../utils/objectRequire");
+const { resolveRealDistance } = require("../../resolveStation");
 
 module.exports = (objectRepository) => {
 
   const Train = objectRequire(objectRepository, "model.Train");
-  const Station = objectRequire(objectRepository, "model.Station");
   const TrainStation = objectRequire(objectRepository, "model.TrainStation");
   const TrainStationLink = objectRequire(objectRepository, "model.TrainStationLink");
 

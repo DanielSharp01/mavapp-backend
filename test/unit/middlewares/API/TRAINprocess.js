@@ -17,7 +17,9 @@ let objectRepository = {
         });
       }
     },
-    Station: {},
+    Station: {
+      findOne: ({ normName }) => Promise.resolve({ normName, position: { latitude: 0, longitude: 0 } })
+    },
     TrainStation: {
       findOrCreate: (trainNumber, normName) => {
         return Promise.resolve({
@@ -156,7 +158,7 @@ describe("TRAINprocess MW", function () {
     });
   });
 
-  it("Stations -> Station models transformation", function (done) {
+  it("Parsed station list -> Station models transformation", function (done) {
     let res = {
       locals: {
         parsedTrain: {
@@ -189,7 +191,8 @@ describe("TRAINprocess MW", function () {
               departure: null,
               platform: "4A"
             }
-          ]
+          ],
+          polyline: "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
         }
       }
     };
@@ -277,7 +280,8 @@ describe("TRAINprocess MW", function () {
               arrival: { scheduled: "0:40", actual: "0:41" },
               departure: null
             }
-          ]
+          ],
+          polyline: "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
         }
       }
     };
@@ -306,6 +310,60 @@ describe("TRAINprocess MW", function () {
           return date.isSame(moment({ year: 2000, month: 0, date: 2, hour: 0, minute: 40 }))
         });
         expect(savedStations).to.have.property("c").that.has.property("departure").to.be.null;
+        done();
+      }
+      catch (err) {
+        done(err);
+      }
+    });
+  });
+
+  it("Parsed station list -> TrainStationLink models transformation", function (done) {
+    let res = {
+      locals: {
+        parsedTrain: {
+          header:
+          {
+            number: 652
+          },
+          stations: [
+            {
+              name: "A",
+              normName: "a",
+              arrival: null,
+              departure: { scheduled: "23:59", actual: "0:00" },
+            },
+            {
+              name: "B",
+              normName: "b",
+              arrival: { scheduled: "0:19", actual: "0:20" },
+              departure: { scheduled: "0:20", actual: "0:21" }
+            },
+            {
+              name: "C",
+              normName: "c",
+              arrival: { scheduled: "0:40", actual: "0:41" },
+              departure: null
+            }
+          ],
+          polyline: "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
+        }
+      }
+    };
+
+    let savedLinks = {};
+    mockSaveTrainStationLinkCallback = (link) => {
+      savedLinks[link.fromNormName + "." + link.toNormName] = link;
+      return Promise.resolve(link);
+    }
+
+    TRAINprocessMW(objectRepository)({}, res, (err) => {
+      try {
+        expect(err).to.be.undefined;
+        expect(savedLinks).to.have.property("null.a").that.includes({ trainNumber: 652, fromNormName: null, toNormName: "a" });
+        expect(savedLinks).to.have.property("a.b").that.includes({ trainNumber: 652, fromNormName: "a", toNormName: "b" });
+        expect(savedLinks).to.have.property("b.c").that.includes({ trainNumber: 652, fromNormName: "b", toNormName: "c" });
+        expect(savedLinks).to.have.property("c.null").that.includes({ trainNumber: 652, fromNormName: "c", toNormName: null });
         done();
       }
       catch (err) {
