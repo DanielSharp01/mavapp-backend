@@ -1,6 +1,6 @@
 const moment = require("moment");
 const { splitElviraDateId } = require("../../utils/parserUtils");
-const objectRequire = require("../../utils/objectRequire")
+const objectRequire = require("../../utils/objectRequire");
 
 module.exports = (objectRepository) => {
   const TRAIN = objectRequire(objectRepository, "mavapi.TRAIN");

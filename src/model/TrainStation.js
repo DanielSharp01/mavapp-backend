@@ -28,12 +28,4 @@ TrainStationSchema.statics.findOrCreate = async function (trainNumber, normName)
   return res;
 }
 
-TrainStationSchema.methods.setInfo = function ({ mavName, intDistance, platform, arrival, departure }) {
-  this.mavName = mavName;
-  this.intDistance = intDistance;
-  this.platform = platform;
-  this.arrival = arrival;
-  this.departure = departure;
-}
-
 module.exports = db.model("TrainStation", TrainStationSchema);

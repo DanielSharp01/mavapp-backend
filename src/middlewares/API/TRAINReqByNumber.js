@@ -1,4 +1,4 @@
-const objectRequire = require("../../utils/objectRequire")
+const objectRequire = require("../../utils/objectRequire");
 
 module.exports = (objectRepository) => {
   const TRAIN = objectRequire(objectRepository, "mavapi.TRAIN");
