@@ -25,6 +25,7 @@ describe("parseStation MW", function () {
     parseStationMW()({}, res, (err) => {
       expect(err).to.be.undefined;
       expect(res.locals.parsedStation.name).to.equal("Budapest-Nyugati");
+      expect(res.locals.parsedStation.normName).to.equal("budapest nyugati");
       expect(res.locals.parsedStation.date.year()).to.equal(2019);
       expect(res.locals.parsedStation.date.month()).to.equal(4);
       expect(res.locals.parsedStation.date.date()).to.equal(5);

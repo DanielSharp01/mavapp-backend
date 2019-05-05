@@ -55,7 +55,7 @@ describe("processTrain MW", function () {
             number: 652,
             name: "mock name",
             type: "mock type",
-            relation: { from: "A", to: "B" },
+            relation: { from: { name: "A", normName: "a" }, to: { name: "B", normName: "b" } },
             visz: "mock visz",
             date: moment(),
           },
@@ -78,8 +78,7 @@ describe("processTrain MW", function () {
         expect(savedTrain.number).to.equal(652);
         expect(savedTrain.name).to.equal("mock name");
         expect(savedTrain.type).to.equal("mock type");
-        expect(savedTrain.name).to.equal("mock name");
-        expect(savedTrain.relation).to.eql({ from: "A", to: "B" });
+        expect(savedTrain.relation).to.eql({ from: "a", to: "b" });
         expect(savedTrain.visz).to.equal("mock visz");
         expect(savedTrain.expiry.year()).to.equal(2019);
         expect(savedTrain.expiry.month()).to.equal(4);

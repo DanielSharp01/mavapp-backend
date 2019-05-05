@@ -51,8 +51,10 @@ describe("parseTrain MW", function () {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("személyvonat");
-      expect(res.locals.parsedTrain.header.relation.from).to.equal("Kelebia");
-      expect(res.locals.parsedTrain.header.relation.to).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.from.name).to.equal("Kelebia");
+      expect(res.locals.parsedTrain.header.relation.from.normName).to.equal("kelebia");
+      expect(res.locals.parsedTrain.header.relation.to.name).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.to.normName).to.equal("budapest keleti");
       expect(res.locals.parsedTrain.header.date.year()).to.equal(2019);
       expect(res.locals.parsedTrain.header.date.month()).to.equal(4);
       expect(res.locals.parsedTrain.header.date.date()).to.equal(3);
@@ -86,8 +88,10 @@ describe("parseTrain MW", function () {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("személyvonat");
-      expect(res.locals.parsedTrain.header.relation.from).to.equal("Kelebia");
-      expect(res.locals.parsedTrain.header.relation.to).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.from.name).to.equal("Kelebia");
+      expect(res.locals.parsedTrain.header.relation.from.normName).to.equal("kelebia");
+      expect(res.locals.parsedTrain.header.relation.to.name).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.to.normName).to.equal("budapest keleti");
       expect(res.locals.parsedTrain.header.date.year()).to.equal(2019);
       expect(res.locals.parsedTrain.header.date.month()).to.equal(4);
       expect(res.locals.parsedTrain.header.date.date()).to.equal(3);
@@ -121,8 +125,10 @@ describe("parseTrain MW", function () {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("InterCity");
-      expect(res.locals.parsedTrain.header.relation.from).to.equal("Kelebia");
-      expect(res.locals.parsedTrain.header.relation.to).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.from.name).to.equal("Kelebia");
+      expect(res.locals.parsedTrain.header.relation.from.normName).to.equal("kelebia");
+      expect(res.locals.parsedTrain.header.relation.to.name).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.to.normName).to.equal("budapest keleti");
       expect(res.locals.parsedTrain.header.date.year()).to.equal(2019);
       expect(res.locals.parsedTrain.header.date.month()).to.equal(4);
       expect(res.locals.parsedTrain.header.date.date()).to.equal(3);
@@ -166,8 +172,10 @@ describe("parseTrain MW", function () {
           { rel: { from: "intermediate", to: "Budapest-Keleti" }, type: "sebesvonat" }
         ]
       );
-      expect(res.locals.parsedTrain.header.relation.from).to.equal("Kelebia");
-      expect(res.locals.parsedTrain.header.relation.to).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.from.name).to.equal("Kelebia");
+      expect(res.locals.parsedTrain.header.relation.from.normName).to.equal("kelebia");
+      expect(res.locals.parsedTrain.header.relation.to.name).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.to.normName).to.equal("budapest keleti");
       expect(res.locals.parsedTrain.header.date.year()).to.equal(2019);
       expect(res.locals.parsedTrain.header.date.month()).to.equal(4);
       expect(res.locals.parsedTrain.header.date.date()).to.equal(3);
@@ -201,8 +209,10 @@ describe("parseTrain MW", function () {
       expect(err).to.be.undefined;
       expect(res.locals.parsedTrain.header.number).to.equal(7911);
       expect(res.locals.parsedTrain.header.type).to.equal("InterCity");
-      expect(res.locals.parsedTrain.header.relation.from).to.equal("Kelebia");
-      expect(res.locals.parsedTrain.header.relation.to).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.from.name).to.equal("Kelebia");
+      expect(res.locals.parsedTrain.header.relation.from.normName).to.equal("kelebia");
+      expect(res.locals.parsedTrain.header.relation.to.name).to.equal("Budapest-Keleti");
+      expect(res.locals.parsedTrain.header.relation.to.normName).to.equal("budapest keleti");
       expect(res.locals.parsedTrain.header.date.year()).to.equal(2019);
       expect(res.locals.parsedTrain.header.date.month()).to.equal(4);
       expect(res.locals.parsedTrain.header.date.date()).to.equal(3);

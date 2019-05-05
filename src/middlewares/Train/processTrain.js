@@ -22,7 +22,10 @@ module.exports = (objectRepository) => {
         train.name = header.name;
         train.visz = header.visz;
         train.type = header.type;
-        train.relation = header.relation;
+        if (header.relation) train.relation = {
+          from: header.relation.from && header.relation.from.normName,
+          to: header.relation.to && header.relation.to.normName
+        };
         train.encodedPolyline = parsedTrain.polyline;
         train.expiry = parsedTrain.expiry;
         train.alwaysValid = parsedTrain.alwaysValid;

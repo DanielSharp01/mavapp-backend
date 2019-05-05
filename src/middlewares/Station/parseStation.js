@@ -86,7 +86,12 @@ module.exports = () => {
     let ch = cheerio.load(apiRes.d.result, { decodeEntities: true });
 
     let { name, date } = parseStationHeader(ch);
-    res.locals.parsedStation = { name, date, entries: parseStationTrains(ch, name) }
+    res.locals.parsedStation = {
+      name,
+      normName: normalizeStationName(name),
+      date,
+      entries: parseStationTrains(ch, name)
+    }
     return next();
   }
 }

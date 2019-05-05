@@ -63,7 +63,11 @@ function parseRelation(text) {
   let date = moment(spl[1], "YYYY.MM.DD");
   let relationSpl = spl[0].split(" - ").map(s => s.trim());
 
-  return { date, from: relationSpl[0], to: relationSpl[1] };
+  return {
+    date,
+    from: { name: relationSpl[0], normName: normalizeStationName(relationSpl[0]) },
+    to: { name: relationSpl[1], normName: normalizeStationName(relationSpl[1]) }
+  };
 }
 
 function parseExpiry(cheerio) {
