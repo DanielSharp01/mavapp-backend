@@ -15,8 +15,11 @@ let objectRepository = {
       findOrCreate: (number) => {
         return Promise.resolve({
           number,
-          validityExpiry: moment({ year: 2019, month: 3, date: 3 }),
-          save: function () { return mockSaveTrainCallback(this) }
+          validity: [moment({ year: 2019, month: 3, date: 3 })],
+          save: function () { return mockSaveTrainCallback(this) },
+          isValid: function (date) {
+            return this.validity.filter(d => moment(d).isSame(moment(date))).length == 1;
+          }
         });
       }
     },
@@ -70,7 +73,7 @@ let res = {
           platform: "14",
           train: {
             number: 2611,
-            date: moment().subtract(1, "days"),
+            date: moment({ year: 2019, month: 3, date: 3 }),
             type: "személy",
             name: null,
             elviraId: 5609187,
@@ -371,27 +374,16 @@ describe("processStation MW", function () {
     processStationMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
-        expect(savedTrains).to.have.property(2510).that.containSubset({
-          number: 2510,
-          name: null,
-          type: "személy",
-          elviraId: 5608162,
-          relation: { from: "budapest nyugati", to: "vac" }
-        });
-        expect(savedTrains).to.have.property(2611).that.containSubset({
-          number: 2611,
-          name: null,
-          type: "személy",
-          elviraId: 5609187,
-          relation: { from: "szolnok", to: "budapest nyugati" }
-        });
-        expect(savedTrains).to.have.property(2711).that.containSubset({
-          number: 2711,
-          name: "mock name",
-          type: "személy",
-          elviraId: 5609187,
-          relation: { from: "szolnok", to: "some station" }
-        });
+        expect(savedTrains).to.have.property(2510)
+          .that.satisfies(t => t.validity.length == 2 && t.isValid(moment({ year: 2019, month: 3, date: 3 }))
+            && t.isValid(moment()));
+
+        expect(savedTrains).to.have.property(2611)
+          .that.satisfies(t => t.validity.length == 1 && t.isValid(moment({ year: 2019, month: 3, date: 3 })))
+
+        expect(savedTrains).to.have.property(2711)
+          .that.satisfies(t => t.validity.length == 2 && t.isValid(moment({ year: 2019, month: 3, date: 3 }))
+            && t.isValid(moment().subtract(1, "days")));
         done();
       }
       catch (err) {
