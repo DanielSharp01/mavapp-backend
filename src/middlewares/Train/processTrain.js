@@ -29,8 +29,8 @@ module.exports = (objectRepository) => {
         train.encodedPolyline = parsedTrain.polyline;
         train.expiry = parsedTrain.expiry;
         train.alwaysValid = parsedTrain.alwaysValid;
-        if (header.date && header.date.isSame(moment(), "day")) {
-          train.validityExpiry = moment().startOf('day').add(1, "days");
+        if (header.date && !train.isValid(header.date)) {
+          train.validity.push(header.date);
         }
         res.locals.train = train;
         return train.save();

@@ -15,7 +15,7 @@ const TrainSchema = new Schema({
   },
   expiry: Date,
   alwaysValid: Boolean,
-  validityExpiry: Date,
+  validity: [Date],
   encodedPolyline: String
 });
 
@@ -23,6 +23,9 @@ TrainSchema.virtual("fullKnowledge").get(function () {
   return (typeof this.expiry !== "undefined") && !moment(this.expiry).isBefore(moment())
 });
 
+TrainSchema.virtual("isValid").get(function (date = moment()) {
+  return this.validity.filter(d => moment(d).isSame(moment(date))).length == 1;
+});
 
 TrainSchema.statics.findOrCreate = async function (number) {
   let res = await this.findOne({ number });
@@ -31,6 +34,7 @@ TrainSchema.statics.findOrCreate = async function (number) {
   res = new this();
   res._id = mongoose.Types.ObjectId();
   res.number = number;
+  res.validity = [];
   return res;
 }
 

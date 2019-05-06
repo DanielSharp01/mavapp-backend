@@ -14,8 +14,11 @@ let objectRepository = {
       findOrCreate: (number) => {
         return Promise.resolve({
           number,
-          validityExpiry: moment({ year: 2019, month: 3, date: 3 }),
-          save: function () { return mockSaveTrainCallback(this) }
+          validity: [moment({ year: 2019, month: 3, date: 3 })],
+          save: function () { return mockSaveTrainCallback(this) },
+          isValid: function (date) {
+            return this.validity.filter(d => moment(d).isSame(moment(date))).length == 1;
+          }
         });
       }
     },
@@ -94,7 +97,7 @@ describe("processTrain MW", function () {
     });
   });
 
-  it("Train validity expiry calculation same day", function (done) {
+  it("Train push validity", function (done) {
     let res = {
       locals: {
         parsedTrain: {
@@ -118,7 +121,8 @@ describe("processTrain MW", function () {
     processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
-        expect(savedTrain.validityExpiry).to.be.satisfy((m) => m.isSame(moment().startOf("day").add(1, "days"), "day"));
+        expect(savedTrain.validity.length).to.equal(2);
+        expect(savedTrain.isValid(moment())).to.be.true;
         done();
       }
       catch (err) {
@@ -127,14 +131,14 @@ describe("processTrain MW", function () {
     });
   });
 
-  it("Train validity expiry calculation different day", function (done) {
+  it("Train validity already exists", function (done) {
     let res = {
       locals: {
         parsedTrain: {
           header:
           {
             number: 652,
-            date: moment().add(1, "days"),
+            date: moment({ year: 2019, month: 3, date: 3 }),
           },
           expiry: moment({ year: 2019, month: 4, date: 30 }),
           alwaysValid: false
@@ -151,9 +155,8 @@ describe("processTrain MW", function () {
     processTrainMW(objectRepository)({}, res, (err) => {
       try {
         expect(err).to.be.undefined;
-        expect(savedTrain.validityExpiry.year()).to.equal(2019);
-        expect(savedTrain.validityExpiry.month()).to.equal(3);
-        expect(savedTrain.validityExpiry.date()).to.equal(3);
+        expect(savedTrain.validity.length).to.equal(1);
+        expect(savedTrain.isValid(moment({ year: 2019, month: 3, date: 3 }))).to.be.true;
         done();
       }
       catch (err) {
