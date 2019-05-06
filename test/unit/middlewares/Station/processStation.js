@@ -391,4 +391,46 @@ describe("processStation MW", function () {
       }
     });
   });
+
+  it("No parsedStation should call next", function (done) {
+    let res = { locals: {} };
+    processStationMW(objectRepository)({}, res, (err) => {
+      try {
+        expect(err).to.be.undefined;
+        done();
+      }
+      catch (err) {
+        done(err);
+      }
+    });
+  });
+
+  it("DB error while saving should call next with error", function (done) {
+    objectRepository.model.Train.save = () => Promise.reject("Rejection test");
+    objectRepository.model.TrainStation.save = () => Promise.reject("Rejection test");
+    processStationMW(objectRepository)({}, res, (err) => {
+      try {
+        expect(err).to.be.equal("Rejection test");
+        done();
+      }
+      catch (err) {
+        done(err);
+      }
+    });
+  });
+
+
+  it("DB error while creating should call next with error", function (done) {
+    objectRepository.model.Train.findOrCreate = () => Promise.reject("Rejection test");
+    objectRepository.model.TrainStation.findOrCreate = () => Promise.reject("Rejection test");
+    processStationMW(objectRepository)({}, res, (err) => {
+      try {
+        expect(err).to.be.equal("Rejection test");
+        done();
+      }
+      catch (err) {
+        done(err);
+      }
+    });
+  });
 });

@@ -409,7 +409,7 @@ describe("processTrain MW", function () {
     });
   });
 
-  it("Database problem when saving should call next with error", function (done) {
+  it("DB error when saving should call next with error", function (done) {
     let res = {
       locals: {
         parsedTrain: {
@@ -435,7 +435,7 @@ describe("processTrain MW", function () {
     });
   });
 
-  it("Database problem when creating should call next with error", function (done) {
+  it("DB error when creating should call next with error", function (done) {
     let res = {
       locals: {
         parsedTrain: {
